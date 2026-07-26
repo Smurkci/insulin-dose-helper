@@ -1,0 +1,1358 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Insulin Dose Helper</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              foreground: {
+                100: "#fffbf8", 150: "#f8f4f1", 200: "#efeae7", 250: "#e2ddd9",
+                300: "#cfc9c5", 350: "#b3ada8", 400: "#98918b", 450: "#746d68",
+                550: "#635c57", 600: "#5a544f", 650: "#4c4642", 700: "#3f3935",
+                750: "#322d29", 800: "#272320", 850: "#1d1a17", 900: "#14110e",
+              },
+              background: {
+                100: "#fffbf8", 150: "#f8f4f1", 200: "#efeae7", 250: "#e2ddd9",
+                300: "#cfc9c5", 350: "#b3ada8", 400: "#98918b", 450: "#746d68",
+              },
+              accent: {
+                100: "#f5f8fd", 150: "#eef4fe", 200: "#dbeafe", 250: "#c4dbfa",
+                300: "#93b5ef", 350: "#6e9be4", 400: "#5489d6", 450: "#3468b0",
+                550: "#2b5899", 600: "#244b83", 650: "#1e3f6e", 700: "#1a355e",
+                750: "#152b4e", 800: "#102140", 850: "#0c1832", 900: "#081025",
+              },
+              stroke: {
+                100: "#fffbf8", 150: "#fff3ea", 200: "#f6e8dd", 250: "#ebdbce",
+                300: "#dac6b7", 350: "#c1a996", 400: "#a88c76", 450: "#87674e",
+                550: "#745740", 600: "#6a4f39", 650: "#59422f", 700: "#493626",
+              },
+              muted: {
+                100: "#fffbf8", 150: "#fff3ea", 200: "#f6e8dd", 250: "#ebdbce",
+                300: "#dac6b7", 350: "#c1a996", 400: "#a88c76", 450: "#87674e",
+                550: "#745740", 600: "#6a4f39", 650: "#59422f", 700: "#493626",
+                750: "#3a2a1e", 800: "#2d2117", 850: "#221811", 900: "#17100a",
+              },
+              "system-green": {
+                200: "#baeec0", 300: "#97dfa1", 350: "#6cc57b", 400: "#32ad52",
+                550: "#01712b", 600: "#016826", 750: "#093815",
+              },
+              "system-red": {
+                200: "#ffe4e1", 300: "#ffb5ae", 350: "#f98981", 400: "#e7615b",
+                550: "#ac1922", 600: "#9d1920", 650: "#821b1e",
+              },
+              "system-yellow": {
+                100: "#fffbf4", 300: "#f3c357", 350: "#d6a632", 600: "#6c5001",
+              },
+              "system-orange": {
+                100: "#fffbf8", 300: "#ffba81", 350: "#ed974a", 400: "#d57702",
+                550: "#8a4b01", 650: "#6b3900",
+              },
+              "system-blue": {
+                100: "#f5f8fd", 200: "#dbeafe", 300: "#adcaf6", 350: "#7eaae9",
+                400: "#5489d6", 550: "#2f5ea3", 600: "#274f8c", 750: "#1e3a8a",
+              },
+              "system-teal": {
+                100: "#effefb", 200: "#ccf5ed", 300: "#88e5d3", 350: "#52d1b9",
+                400: "#26b89d", 550: "#138770", 600: "#0f7561", 750: "#094d40",
+              },
+              "system-purple": {
+                100: "#f9f7fd", 200: "#ece3f6", 300: "#d4c0ec", 350: "#b995dd",
+                400: "#9c6ac9", 550: "#6f3da0", 600: "#603489", 750: "#402360",
+              },
+            },
+            borderRadius: {
+              "3xl": "1.25rem", "4xl": "1.5rem", "5xl": "1.75rem", "6xl": "2rem",
+            },
+            fontFamily: {
+              sans: ["Inter", "sans-serif"],
+            },
+          },
+        },
+      };
+    </script>
+    <script src="https://unpkg.com/lucide@latest" defer></script>
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        font-family: 'Inter', sans-serif;
+        margin: 0;
+        min-height: 100vh;
+        background: linear-gradient(135deg, #f8f4f1 0%, #eef4fe 50%, #f8f4f1 100%);
+      }
+      input[type="number"], input[type="text"] {
+        -moz-appearance: textfield;
+      }
+      input[type="number"]::-webkit-outer-spin-button,
+      input[type="number"]::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+      .tab-underline {
+        position: relative;
+      }
+      .tab-underline::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: #3468b0;
+        border-radius: 2px;
+        transform: scaleX(0);
+        transition: transform 0.25s ease;
+      }
+      .tab-underline.active::after {
+        transform: scaleX(1);
+      }
+      .results-enter {
+        animation: slideUp 0.4s ease forwards;
+      }
+      @keyframes slideUp {
+        from { opacity: 0; transform: translateY(16px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .fade-in {
+        animation: fadeIn 0.3s ease forwards;
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      .save-flash {
+        animation: flashGreen 1.5s ease forwards;
+      }
+      @keyframes flashGreen {
+        0% { opacity: 0; transform: translateY(-4px); }
+        20% { opacity: 1; transform: translateY(0); }
+        80% { opacity: 1; }
+        100% { opacity: 0; }
+      }
+      .food-card {
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+      }
+      .food-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(20,17,14,0.08);
+      }
+      .toast-enter {
+        animation: toastSlide 0.3s ease forwards;
+      }
+      .toast-exit {
+        animation: toastFadeOut 0.3s ease forwards;
+      }
+      @keyframes toastSlide {
+        from { opacity: 0; transform: translateY(16px) scale(0.95); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+      }
+      @keyframes toastFadeOut {
+        from { opacity: 1; transform: translateY(0) scale(1); }
+        to { opacity: 0; transform: translateY(8px) scale(0.95); }
+      }
+      .filter-pill {
+        transition: all 0.2s ease;
+      }
+      .filter-pill.active-pill {
+        background: #3468b0;
+        color: #fff;
+      }
+      .brand-pill {
+        transition: all 0.2s ease;
+        white-space: nowrap;
+      }
+      .brand-pill.active-brand {
+        background: #1a355e;
+        color: #fff;
+      }
+      .foods-scroll {
+        max-height: 520px;
+        overflow-y: auto;
+      }
+      .foods-scroll::-webkit-scrollbar {
+        width: 6px;
+      }
+      .foods-scroll::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .foods-scroll::-webkit-scrollbar-thumb {
+        background: #cfc9c5;
+        border-radius: 3px;
+      }
+      .brand-pills-row {
+        display: flex;
+        gap: 6px;
+        overflow-x: auto;
+        white-space: nowrap;
+        margin-bottom: 12px;
+        padding-bottom: 4px;
+        -webkit-overflow-scrolling: touch;
+      }
+      .brand-pills-row::-webkit-scrollbar {
+        height: 4px;
+      }
+      .brand-pills-row::-webkit-scrollbar-thumb {
+        background: #cfc9c5;
+        border-radius: 2px;
+      }
+      .pagination-row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 12px 0 4px;
+      }
+      .pagination-row button {
+        padding: 8px 16px;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        min-height: 40px;
+        transition: background 0.15s, color 0.15s;
+      }
+      .pagination-row button:disabled {
+        opacity: 0.4;
+        cursor: default;
+      }
+      .food-card .food-name {
+        white-space: normal;
+        word-break: break-word;
+        overflow: visible;
+        display: block;
+        text-overflow: unset;
+        -webkit-line-clamp: unset;
+        -webkit-box-orient: unset;
+      }
+      .food-card .food-brand {
+        white-space: normal;
+        word-break: break-word;
+        overflow: visible;
+        display: block;
+        text-overflow: unset;
+      }
+      /* Dexcom Banner */
+      #dexcom-banner { padding: 10px 18px; display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid rgba(218,198,183,0.3); flex-wrap: wrap; background: #f8f4f1; }
+      #dexcom-status { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #3f3935; }
+      .dex-dot { width: 9px; height: 9px; border-radius: 50%; background: #b3ada8; display: inline-block; flex-shrink: 0; }
+      .dex-dot.connected { background: #32ad52; animation: dexPulse 2s infinite; }
+      .dex-dot.error { background: #e7615b; }
+      @keyframes dexPulse { 0%,100%{opacity:1}50%{opacity:.4} }
+      #glucose-display { font-size: 20px; font-weight: 800; color: #1a355e; letter-spacing: -0.5px; }
+      #glucose-trend { font-size: 16px; }
+      #glucose-time { font-size: 11px; color: #98918b; }
+      #dexcom-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+      #sandbox-badge { background: #fef3c7; color: #92400e; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 99px; border: 1px solid #f59e0b; }
+      .btn-dex { border: none; border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; transition: background .15s; }
+      .btn-dex-connect { background: #059669; color: #fff; }
+      .btn-dex-connect:hover { background: #047857; }
+      .btn-dex-disconnect { background: #fee2e2; color: #b91c1c; }
+      .btn-dex-disconnect:hover { background: #fecaca; }
+      .btn-dex-refresh { background: #eff6ff; color: #1d4ed8; }
+      .btn-dex-refresh:hover { background: #dbeafe; }
+      .btn-dex-autofill { background: #3468b0; color: #fff; }
+      .btn-dex-autofill:hover { background: #1a355e; }
+      .bg-autofilled { border-color: #32ad52 !important; background: #f0fdf4 !important; }
+    </style>
+  </head>
+  <body data-id="0" class="min-h-screen flex flex-col">
+    <app-icon data-id="1" hidden data-icon="heart-pulse" data-palette="Blue"></app-icon>
+    <app-disclaimer data-id="2" intent="medical"></app-disclaimer>
+
+    <!-- Toast Container -->
+    <div data-id="3" id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 items-end pointer-events-none"></div>
+
+    <!-- Main Container -->
+    <div data-id="4" class="flex-1 flex flex-col items-center px-4 py-6 md:py-10">
+      <div data-id="5" class="w-full max-w-xl">
+
+        <!-- App Header -->
+        <div data-id="6" class="text-center mb-6">
+          <h1 data-id="7" class="text-2xl md:text-3xl font-bold text-foreground-900 flex items-center justify-center gap-2">
+            <i data-id="8" data-lucide="heart-pulse" class="w-7 h-7 text-accent-450"></i>
+            Insulin Dose Helper
+          </h1>
+          <p data-id="9" class="text-sm text-foreground-450 mt-1">Educational bolus dose calculator</p>
+        </div>
+
+        <!-- Main Card -->
+        <div data-id="10" class="bg-background-100 rounded-3xl overflow-hidden" style="box-shadow: 0px 8px 24px rgba(20, 17, 14, 0.06);">
+
+          <!-- Dexcom Banner -->
+          <div data-id="11" id="dexcom-banner">
+            <div data-id="12" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+              <div data-id="13" id="dexcom-status">
+                <span data-id="14" class="dex-dot" id="status-dot"></span>
+                <span data-id="15" id="status-text">Dexcom: Not Connected</span>
+                <span data-id="16" id="sandbox-badge" style="display:none;">SANDBOX</span>
+              </div>
+              <div data-id="17" id="glucose-reading" style="display:none;flex-direction:column;">
+                <div data-id="18" style="display:flex;align-items:center;gap:4px;">
+                  <span data-id="19" id="glucose-display">--</span>
+                  <span data-id="20" style="font-size:12px;color:#98918b;">mg/dL</span>
+                  <span data-id="21" id="glucose-trend"></span>
+                </div>
+                <div data-id="22" id="glucose-time"></div>
+              </div>
+            </div>
+            <div data-id="23" id="dexcom-actions">
+              <button data-id="24" class="btn-dex btn-dex-connect" id="btn-dex-connect">🔗 Connect Dexcom</button>
+              <button data-id="25" class="btn-dex btn-dex-refresh" id="btn-dex-refresh" style="display:none;">🔄 Refresh</button>
+              <button data-id="26" class="btn-dex btn-dex-autofill" id="btn-dex-autofill" style="display:none;">⬇️ Auto-fill BG</button>
+              <button data-id="27" class="btn-dex btn-dex-disconnect" id="btn-dex-disconnect" style="display:none;">✕ Disconnect</button>
+            </div>
+          </div>
+
+          <!-- Tab Bar -->
+          <div data-id="28" class="flex border-b" style="border-color: rgba(218, 198, 183, 0.3);">
+            <button data-id="29" id="tab-calculator" class="tab-underline active flex-1 py-4 text-sm font-medium text-accent-550 flex items-center justify-center gap-1.5 transition-colors min-h-[44px]">
+              <i data-id="30" data-lucide="calculator" class="w-4 h-4"></i>
+              Calculator
+            </button>
+            <button data-id="31" id="tab-foods" class="tab-underline flex-1 py-4 text-sm font-medium text-foreground-450 flex items-center justify-center gap-1.5 transition-colors min-h-[44px]">
+              <span data-id="32" class="text-base leading-none">🍔</span>
+              Foods
+            </button>
+            <button data-id="33" id="tab-settings" class="tab-underline flex-1 py-4 text-sm font-medium text-foreground-450 flex items-center justify-center gap-1.5 transition-colors min-h-[44px]">
+              <i data-id="34" data-lucide="settings" class="w-4 h-4"></i>
+              Settings
+            </button>
+          </div>
+
+          <!-- Calculator Panel -->
+          <div data-id="35" id="panel-calculator" class="p-5 md:p-8">
+            <div data-id="36" class="space-y-4">
+              <h2 data-id="37" class="text-lg font-semibold text-foreground-800 mb-1">Meal &amp; Glucose Info</h2>
+              <div data-id="38">
+                <label data-id="39" class="block text-sm font-medium text-foreground-700 mb-1.5" for="calc-carbs">Carbohydrates (grams)</label>
+                <input data-id="40" type="number" id="calc-carbs" min="0" step="1" placeholder="e.g., 60" class="w-full bg-background-200 rounded-xl px-4 py-3 text-base text-foreground-800 placeholder-foreground-350 outline-none transition-all focus:bg-background-100 focus:ring-2 focus:ring-accent-300" />
+              </div>
+              <div data-id="41">
+                <label data-id="42" class="block text-sm font-medium text-foreground-700 mb-1.5" for="calc-bg">Current Blood Glucose (mg/dL) <span data-id="43" id="bg-hint" style="font-size:11px;color:#98918b;font-weight:400;margin-left:4px;">enter manually or connect Dexcom</span></label>
+                <input data-id="44" type="number" id="calc-bg" min="0" step="1" placeholder="e.g., 180" class="w-full bg-background-200 rounded-xl px-4 py-3 text-base text-foreground-800 placeholder-foreground-350 outline-none transition-all focus:bg-background-100 focus:ring-2 focus:ring-accent-300" />
+              </div>
+              <hr data-id="45" class="border-none h-px bg-background-200 my-2" />
+              <h2 data-id="46" class="text-lg font-semibold text-foreground-800 mb-1 flex items-center gap-2">
+                Your Ratios
+                <span data-id="47" class="text-xs font-normal text-foreground-450">(from Settings)</span>
+              </h2>
+              <div data-id="48">
+                <label data-id="49" class="block text-sm font-medium text-foreground-700 mb-1.5" for="calc-icr">Insulin-to-Carb Ratio (ICR)</label>
+                <input data-id="50" type="number" id="calc-icr" min="0" step="0.1" placeholder="e.g., 15" class="w-full bg-background-200 rounded-xl px-4 py-3 text-base text-foreground-800 placeholder-foreground-350 outline-none transition-all focus:bg-background-100 focus:ring-2 focus:ring-accent-300" />
+                <p data-id="51" class="text-xs text-foreground-450 mt-1">1 unit of insulin per X grams of carbs</p>
+              </div>
+              <div data-id="52">
+                <label data-id="53" class="block text-sm font-medium text-foreground-700 mb-1.5" for="calc-isf">Insulin Sensitivity Factor (ISF)</label>
+                <input data-id="54" type="number" id="calc-isf" min="0" step="0.1" placeholder="e.g., 50" class="w-full bg-background-200 rounded-xl px-4 py-3 text-base text-foreground-800 placeholder-foreground-350 outline-none transition-all focus:bg-background-100 focus:ring-2 focus:ring-accent-300" />
+                <p data-id="55" class="text-xs text-foreground-450 mt-1">How many mg/dL one unit lowers your BG</p>
+              </div>
+              <div data-id="56">
+                <label data-id="57" class="block text-sm font-medium text-foreground-700 mb-1.5" for="calc-target">Target Blood Glucose (mg/dL)</label>
+                <input data-id="58" type="number" id="calc-target" min="0" step="1" placeholder="e.g., 100" class="w-full bg-background-200 rounded-xl px-4 py-3 text-base text-foreground-800 placeholder-foreground-350 outline-none transition-all focus:bg-background-100 focus:ring-2 focus:ring-accent-300" />
+              </div>
+            </div>
+            <div data-id="59" class="mt-6 flex flex-col gap-3">
+              <button data-id="60" id="btn-calculate" class="w-full bg-accent-450 hover:bg-accent-550 text-background-100 font-semibold py-3.5 rounded-xl text-base transition-colors flex items-center justify-center gap-2 min-h-[44px]">
+                <i data-id="61" data-lucide="calculator" class="w-5 h-5"></i>
+                Calculate
+              </button>
+              <button data-id="62" id="btn-reset" class="w-full bg-background-200 hover:bg-background-250 text-foreground-700 font-medium py-3 rounded-xl text-sm transition-colors flex items-center justify-center gap-2 min-h-[44px]">
+                <i data-id="63" data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                Reset
+              </button>
+            </div>
+            <div data-id="64" id="calc-error" class="hidden mt-4 bg-system-red-200 text-system-red-550 text-sm font-medium px-4 py-3 rounded-xl flex items-center gap-2">
+              <i data-id="65" data-lucide="alert-circle" class="w-4 h-4 flex-shrink-0"></i>
+              <span data-id="66" id="calc-error-text"></span>
+            </div>
+            <div data-id="67" id="results-section" class="hidden mt-6">
+              <h2 data-id="68" class="text-lg font-semibold text-foreground-800 mb-4">Results</h2>
+              <div data-id="69" id="negative-alert" class="hidden mb-4 bg-system-yellow-100 text-system-yellow-600 text-sm font-medium px-4 py-3 rounded-xl flex items-start gap-2">
+                <i data-id="70" data-lucide="alert-triangle" class="w-4 h-4 flex-shrink-0 mt-0.5"></i>
+                <span data-id="71">Total dose is negative — no correction needed. Monitor your glucose.</span>
+              </div>
+              <div data-id="72" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div data-id="73" class="bg-background-150 rounded-2xl p-4 text-center results-enter" style="animation-delay: 0s;">
+                  <div data-id="74" class="text-2xl mb-1">🍽️</div>
+                  <p data-id="75" class="text-xs font-medium uppercase tracking-wide text-foreground-450 mb-1">Meal Bolus</p>
+                  <p data-id="76" id="result-meal" class="text-2xl font-bold text-foreground-900 tabular-nums">0.00</p>
+                  <p data-id="77" class="text-xs text-foreground-450 mt-0.5">units</p>
+                  <p data-id="78" class="text-xs text-foreground-350 mt-2 leading-relaxed">Carbs ÷ ICR</p>
+                </div>
+                <div data-id="79" class="bg-background-150 rounded-2xl p-4 text-center results-enter" style="animation-delay: 0.1s;">
+                  <div data-id="80" class="text-2xl mb-1">🩸</div>
+                  <p data-id="81" class="text-xs font-medium uppercase tracking-wide text-foreground-450 mb-1">Correction Dose</p>
+                  <p data-id="82" id="result-correction" class="text-2xl font-bold text-foreground-900 tabular-nums">0.00</p>
+                  <p data-id="83" class="text-xs text-foreground-450 mt-0.5">units</p>
+                  <p data-id="84" class="text-xs text-foreground-350 mt-2 leading-relaxed">(BG − Target) ÷ ISF</p>
+                </div>
+                <div data-id="85" id="total-card" class="bg-accent-200 rounded-2xl p-4 text-center results-enter" style="animation-delay: 0.2s; border: 2px solid rgba(52, 104, 176, 0.2);">
+                  <div data-id="86" class="text-2xl mb-1">💉</div>
+                  <p data-id="87" class="text-xs font-medium uppercase tracking-wide text-accent-600 mb-1">Total Bolus</p>
+                  <p data-id="88" id="result-total" class="text-2xl font-bold text-accent-700 tabular-nums">0.00</p>
+                  <p data-id="89" class="text-xs text-accent-550 mt-0.5">units</p>
+                  <p data-id="90" class="text-xs text-accent-450 mt-2 leading-relaxed">Meal + Correction</p>
+                </div>
+              </div>
+              <div data-id="91" class="mt-5">
+                <button data-id="92" id="btn-toggle-formulas" class="flex items-center gap-2 text-sm font-medium text-accent-550 hover:text-accent-600 transition-colors min-h-[44px]">
+                  <i data-id="93" data-lucide="chevron-right" class="w-4 h-4 transition-transform" id="formula-chevron"></i>
+                  How it's calculated
+                </button>
+                <div data-id="94" id="formulas-panel" class="hidden mt-3 bg-background-200 rounded-2xl p-5 text-sm text-foreground-700 space-y-3 fade-in">
+                  <div data-id="95">
+                    <p data-id="96" class="font-semibold text-foreground-800">Meal Bolus</p>
+                    <p data-id="97" class="text-foreground-600">= Carbohydrates ÷ Insulin-to-Carb Ratio</p>
+                  </div>
+                  <div data-id="98">
+                    <p data-id="99" class="font-semibold text-foreground-800">Correction Dose</p>
+                    <p data-id="100" class="text-foreground-600">= (Current BG − Target BG) ÷ Insulin Sensitivity Factor</p>
+                  </div>
+                  <div data-id="101">
+                    <p data-id="102" class="font-semibold text-foreground-800">Total Bolus</p>
+                    <p data-id="103" class="text-foreground-600">= Meal Bolus + Correction Dose</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Foods Panel -->
+          <div data-id="104" id="panel-foods" class="hidden p-5 md:p-8">
+            <!-- Running tally -->
+            <div data-id="105" id="foods-tally" class="hidden mb-4 bg-accent-100 rounded-xl px-4 py-3 flex items-center justify-between">
+              <span data-id="106" class="text-sm font-medium text-accent-600 flex items-center gap-1.5">
+                <span data-id="107" class="text-base">📊</span>
+                Current total: <strong data-id="108" id="tally-value">0</strong>g carbs added to calculator
+              </span>
+              <button data-id="109" id="btn-clear-carbs" class="text-xs font-medium text-system-red-550 hover:text-system-red-600 bg-system-red-200 hover:bg-system-red-300 px-3 py-1.5 rounded-lg transition-colors min-h-[32px] flex items-center gap-1">
+                <i data-id="110" data-lucide="x" class="w-3 h-3"></i>
+                Clear Carbs
+              </button>
+            </div>
+
+            <!-- Search -->
+            <div data-id="111" class="relative mb-3">
+              <i data-id="112" data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-foreground-350 pointer-events-none"></i>
+              <input data-id="113" type="text" id="food-search" placeholder="Search foods..." class="w-full bg-background-200 rounded-xl pl-10 pr-4 py-3 text-base text-foreground-800 placeholder-foreground-350 outline-none transition-all focus:bg-background-100 focus:ring-2 focus:ring-accent-300" />
+            </div>
+
+            <!-- Filter pills -->
+            <div data-id="114" class="flex gap-2 mb-3 flex-wrap">
+              <button data-id="115" class="filter-pill active-pill px-4 py-2 rounded-full text-sm font-medium min-h-[36px]" data-filter="all">All</button>
+              <button data-id="116" class="filter-pill bg-background-200 text-foreground-600 px-4 py-2 rounded-full text-sm font-medium min-h-[36px]" data-filter="fastfood">🍔 Fast Food</button>
+              <button data-id="117" class="filter-pill bg-background-200 text-foreground-600 px-4 py-2 rounded-full text-sm font-medium min-h-[36px]" data-filter="snacks">🍿 Snacks</button>
+              <button data-id="118" class="filter-pill bg-background-200 text-foreground-600 px-4 py-2 rounded-full text-sm font-medium min-h-[36px]" data-filter="drinks">🥤 Drinks</button>
+            </div>
+
+            <!-- Brand filter pills -->
+            <div data-id="119" id="brand-pills-container" class="hidden brand-pills-row"></div>
+            <div data-id="120" id="snack-brand-pills-container" class="hidden brand-pills-row"></div>
+            <div data-id="121" id="drink-brand-pills-container" class="hidden brand-pills-row"></div>
+
+            <!-- Food count / showing range -->
+            <p data-id="122" id="food-count" class="text-xs text-foreground-400 mb-3"></p>
+
+            <!-- Food grid -->
+            <div data-id="123" id="food-grid" class="foods-scroll grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+
+            <!-- Pagination -->
+            <div data-id="124" id="pagination-row" class="pagination-row hidden">
+              <button data-id="125" id="btn-prev-page" class="bg-background-200 text-foreground-700 hover:bg-background-250" disabled>← Prev</button>
+              <span data-id="126" id="page-info" class="text-xs text-foreground-450 font-medium"></span>
+              <button data-id="127" id="btn-next-page" class="bg-background-200 text-foreground-700 hover:bg-background-250" disabled>Next →</button>
+            </div>
+
+            <!-- No results -->
+            <div data-id="128" id="food-no-results" class="hidden text-center py-10">
+              <i data-id="129" data-lucide="search-x" class="w-10 h-10 text-foreground-300 mx-auto mb-3"></i>
+              <p data-id="130" class="text-sm text-foreground-450">No foods found matching your search.</p>
+            </div>
+          </div>
+
+          <!-- Settings Panel -->
+          <div data-id="131" id="panel-settings" class="hidden p-5 md:p-8">
+            <h2 data-id="132" class="text-lg font-semibold text-foreground-800 mb-1">Your Personal Ratios</h2>
+            <p data-id="133" class="text-sm text-foreground-450 mb-5">Save your ratios so they auto-fill in the Calculator tab.</p>
+            <div data-id="134" class="space-y-4">
+              <div data-id="135">
+                <label data-id="136" class="block text-sm font-medium text-foreground-700 mb-1.5" for="set-icr">Insulin-to-Carb Ratio (ICR)</label>
+                <input data-id="137" type="number" id="set-icr" min="0" step="0.1" placeholder="e.g., 15" class="w-full bg-background-200 rounded-xl px-4 py-3 text-base text-foreground-800 placeholder-foreground-350 outline-none transition-all focus:bg-background-100 focus:ring-2 focus:ring-accent-300" />
+                <p data-id="138" class="text-xs text-foreground-450 mt-1">Units of insulin per X grams of carbs (e.g., 1:15 means enter 15)</p>
+              </div>
+              <div data-id="139">
+                <label data-id="140" class="block text-sm font-medium text-foreground-700 mb-1.5" for="set-isf">Insulin Sensitivity Factor (ISF)</label>
+                <input data-id="141" type="number" id="set-isf" min="0" step="0.1" placeholder="e.g., 50" class="w-full bg-background-200 rounded-xl px-4 py-3 text-base text-foreground-800 placeholder-foreground-350 outline-none transition-all focus:bg-background-100 focus:ring-2 focus:ring-accent-300" />
+                <p data-id="142" class="text-xs text-foreground-450 mt-1">How many mg/dL one unit of insulin lowers your blood glucose (e.g., 50)</p>
+              </div>
+              <div data-id="143">
+                <label data-id="144" class="block text-sm font-medium text-foreground-700 mb-1.5" for="set-target">Target Blood Glucose (mg/dL)</label>
+                <input data-id="145" type="number" id="set-target" min="0" step="1" placeholder="e.g., 100" class="w-full bg-background-200 rounded-xl px-4 py-3 text-base text-foreground-800 placeholder-foreground-350 outline-none transition-all focus:bg-background-100 focus:ring-2 focus:ring-accent-300" />
+                <p data-id="146" class="text-xs text-foreground-450 mt-1">Your target BG level (e.g., 100)</p>
+              </div>
+            </div>
+            <div data-id="147" class="mt-6 relative">
+              <button data-id="148" id="btn-save" class="w-full bg-accent-450 hover:bg-accent-550 text-background-100 font-semibold py-3.5 rounded-xl text-base transition-colors flex items-center justify-center gap-2 min-h-[44px]">
+                <i data-id="149" data-lucide="save" class="w-5 h-5"></i>
+                Save Settings
+              </button>
+              <div data-id="150" id="save-confirm" class="hidden absolute -bottom-8 left-0 right-0 text-center">
+                <span data-id="151" class="text-sm font-medium text-system-green-550 save-flash flex items-center justify-center gap-1">
+                  <i data-id="152" data-lucide="check-circle" class="w-4 h-4"></i>
+                  Settings saved ✓
+                </span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer data-id="153" class="py-8 mt-auto text-center">
+      <p data-id="154" class="text-xs text-foreground-450">Made by Copilot</p>
+    </footer>
+
+    <script>
+    // ============================================================
+    // Guard Lucide icons — progressive enhancement
+    // ============================================================
+    if (typeof lucide !== "undefined" && typeof lucide.createIcons === "function") {
+      lucide.createIcons();
+    }
+
+    // ============================================================
+    // FOOD DATABASE — Comprehensive Fast Food + Snacks + Drinks
+    // ============================================================
+    const FOODS = (function buildFoodDB() {
+      var db = [];
+
+      // ==================== FAST FOOD ====================
+      var ff = [
+        // --- McDonald's ---
+        {n:"Egg McMuffin",b:"McDonald's",c:30},{n:"Sausage McMuffin",b:"McDonald's",c:29},{n:"Sausage McMuffin with Egg",b:"McDonald's",c:30},{n:"Bacon Egg & Cheese Biscuit",b:"McDonald's",c:36},{n:"Sausage Biscuit",b:"McDonald's",c:34},{n:"McGriddle Sausage Egg Cheese",b:"McDonald's",c:48},{n:"Hotcakes 3-stack",b:"McDonald's",c:58},{n:"Hotcakes & Sausage",b:"McDonald's",c:61},{n:"Big Breakfast with Hotcakes",b:"McDonald's",c:111},{n:"Hash Browns",b:"McDonald's",c:15},
+        {n:"Fruit & Maple Oatmeal",b:"McDonald's",c:64},{n:"Big Mac",b:"McDonald's",c:45},{n:"Quarter Pounder with Cheese",b:"McDonald's",c:42},{n:"Double Quarter Pounder with Cheese",b:"McDonald's",c:43},{n:"McDouble",b:"McDonald's",c:34},{n:"Double Cheeseburger",b:"McDonald's",c:35},{n:"Cheeseburger",b:"McDonald's",c:33},{n:"Hamburger",b:"McDonald's",c:31},{n:"McChicken",b:"McDonald's",c:40},{n:"Crispy Chicken Sandwich",b:"McDonald's",c:45},
+        {n:"Spicy Crispy Chicken Sandwich",b:"McDonald's",c:46},{n:"Filet-O-Fish",b:"McDonald's",c:39},{n:"McRib",b:"McDonald's",c:45},{n:"Small Fries",b:"McDonald's",c:29},{n:"Medium Fries",b:"McDonald's",c:44},{n:"Large Fries",b:"McDonald's",c:66},{n:"4-pc Chicken McNuggets",b:"McDonald's",c:12},{n:"6-pc Chicken McNuggets",b:"McDonald's",c:17},{n:"10-pc Chicken McNuggets",b:"McDonald's",c:28},{n:"20-pc Chicken McNuggets",b:"McDonald's",c:57},
+        {n:"Apple Slices",b:"McDonald's",c:8},{n:"Side Salad",b:"McDonald's",c:4},{n:"McFlurry Oreo Medium",b:"McDonald's",c:66},{n:"McFlurry M&M Medium",b:"McDonald's",c:68},{n:"Vanilla Soft Serve Cone",b:"McDonald's",c:24},{n:"Hot Fudge Sundae",b:"McDonald's",c:50},{n:"Caramel Sundae",b:"McDonald's",c:52},{n:"Apple Pie",b:"McDonald's",c:32},{n:"Chocolate Shake Medium",b:"McDonald's",c:73},{n:"Vanilla Shake Medium",b:"McDonald's",c:67},
+        {n:"Strawberry Shake Medium",b:"McDonald's",c:73},{n:"Happy Meal Hamburger",b:"McDonald's",c:30},
+
+        // --- Burger King ---
+        {n:"Whopper",b:"Burger King",c:49},{n:"Whopper with Cheese",b:"Burger King",c:50},{n:"Double Whopper",b:"Burger King",c:51},{n:"Double Whopper with Cheese",b:"Burger King",c:52},{n:"Impossible Whopper",b:"Burger King",c:58},{n:"Bacon King",b:"Burger King",c:43},{n:"BK Stacker Double",b:"Burger King",c:32},{n:"Cheeseburger",b:"Burger King",c:30},{n:"Hamburger",b:"Burger King",c:28},{n:"Jr Cheeseburger",b:"Burger King",c:29},
+        {n:"Crispy Chicken Sandwich",b:"Burger King",c:48},{n:"Spicy Crispy Chicken Sandwich",b:"Burger King",c:49},{n:"Original Chicken Sandwich",b:"Burger King",c:47},{n:"Big Fish Sandwich",b:"Burger King",c:54},{n:"Croissan'wich Sausage Egg Cheese",b:"Burger King",c:28},{n:"Croissan'wich Bacon Egg Cheese",b:"Burger King",c:27},{n:"French Toast Sticks 5-pc",b:"Burger King",c:36},{n:"Hash Browns",b:"Burger King",c:18},{n:"Small Fries",b:"Burger King",c:34},{n:"Medium Fries",b:"Burger King",c:46},
+        {n:"Large Fries",b:"Burger King",c:63},{n:"Onion Rings Small",b:"Burger King",c:33},{n:"Onion Rings Medium",b:"Burger King",c:44},{n:"Onion Rings Large",b:"Burger King",c:56},{n:"Mozzarella Sticks 4-pc",b:"Burger King",c:28},{n:"Chocolate Shake Medium",b:"Burger King",c:74},{n:"Vanilla Shake Medium",b:"Burger King",c:68},{n:"Oreo Cookie Shake Medium",b:"Burger King",c:85},{n:"Dutch Apple Pie",b:"Burger King",c:38},{n:"Hershey's Sundae Pie",b:"Burger King",c:32},
+
+        // --- Wendy's ---
+        {n:"Dave's Single",b:"Wendy's",c:40},{n:"Dave's Double",b:"Wendy's",c:41},{n:"Dave's Triple",b:"Wendy's",c:41},{n:"Baconator",b:"Wendy's",c:36},{n:"Double Baconator",b:"Wendy's",c:37},{n:"Son of Baconator",b:"Wendy's",c:34},{n:"Junior Cheeseburger",b:"Wendy's",c:26},{n:"Junior Hamburger",b:"Wendy's",c:25},{n:"Spicy Chicken Sandwich",b:"Wendy's",c:41},{n:"Crispy Chicken Sandwich",b:"Wendy's",c:40},
+        {n:"Homestyle Chicken Sandwich",b:"Wendy's",c:45},{n:"Grilled Chicken Sandwich",b:"Wendy's",c:35},{n:"Classic Chicken Nuggets 4-pc",b:"Wendy's",c:12},{n:"Classic Chicken Nuggets 10-pc",b:"Wendy's",c:29},{n:"Spicy Chicken Nuggets 10-pc",b:"Wendy's",c:28},{n:"Small Fries",b:"Wendy's",c:36},{n:"Medium Fries",b:"Wendy's",c:56},{n:"Large Fries",b:"Wendy's",c:74},{n:"Chili Small",b:"Wendy's",c:21},{n:"Chili Large",b:"Wendy's",c:31},
+        {n:"Baked Potato Plain",b:"Wendy's",c:61},{n:"Baked Potato Sour Cream & Chive",b:"Wendy's",c:71},{n:"Apple Bites",b:"Wendy's",c:8},{n:"Small Chocolate Frosty",b:"Wendy's",c:43},{n:"Medium Chocolate Frosty",b:"Wendy's",c:57},{n:"Large Chocolate Frosty",b:"Wendy's",c:72},{n:"Small Vanilla Frosty",b:"Wendy's",c:43},{n:"Medium Vanilla Frosty",b:"Wendy's",c:57},{n:"Frosty-ccino Cold Brew",b:"Wendy's",c:54},
+
+        // --- Taco Bell ---
+        {n:"Crunchy Taco",b:"Taco Bell",c:13},{n:"Soft Taco",b:"Taco Bell",c:21},{n:"Crunchy Taco Supreme",b:"Taco Bell",c:15},{n:"Soft Taco Supreme",b:"Taco Bell",c:23},{n:"Doritos Locos Taco Nacho Cheese",b:"Taco Bell",c:13},{n:"Doritos Locos Taco Cool Ranch",b:"Taco Bell",c:14},{n:"Doritos Locos Taco Supreme Nacho Cheese",b:"Taco Bell",c:15},{n:"Bean Burrito",b:"Taco Bell",c:54},{n:"Burrito Supreme Beef",b:"Taco Bell",c:52},{n:"Burrito Supreme Chicken",b:"Taco Bell",c:50},
+        {n:"7-Layer Burrito",b:"Taco Bell",c:67},{n:"Crunchwrap Supreme",b:"Taco Bell",c:73},{n:"Beefy 5-Layer Burrito",b:"Taco Bell",c:64},{n:"Grilled Cheese Burrito Beef",b:"Taco Bell",c:74},{n:"Chalupa Supreme Beef",b:"Taco Bell",c:34},{n:"Mexican Pizza",b:"Taco Bell",c:46},{n:"Nachos BellGrande",b:"Taco Bell",c:76},{n:"Cheesy Gordita Crunch",b:"Taco Bell",c:46},{n:"Quesadilla Chicken",b:"Taco Bell",c:40},{n:"Quesadilla Steak",b:"Taco Bell",c:40},
+        {n:"Power Bowl Chicken",b:"Taco Bell",c:53},{n:"Nacho Fries Regular",b:"Taco Bell",c:67},{n:"Nacho Fries Supreme",b:"Taco Bell",c:73},{n:"Chips & Nacho Cheese Sauce",b:"Taco Bell",c:26},{n:"Cinnamon Twists",b:"Taco Bell",c:27},{n:"Cinnabon Delights 2-pc",b:"Taco Bell",c:23},{n:"Cinnabon Delights 4-pc",b:"Taco Bell",c:45},{n:"Breakfast Crunchwrap Sausage",b:"Taco Bell",c:39},{n:"Breakfast Burrito Sausage",b:"Taco Bell",c:32},{n:"Hash Browns",b:"Taco Bell",c:19},
+
+        // --- Chick-fil-A ---
+        {n:"Original Chicken Sandwich",b:"Chick-fil-A",c:40},{n:"Spicy Chicken Sandwich",b:"Chick-fil-A",c:41},{n:"Deluxe Chicken Sandwich",b:"Chick-fil-A",c:42},{n:"Spicy Deluxe Chicken Sandwich",b:"Chick-fil-A",c:43},{n:"Grilled Chicken Sandwich",b:"Chick-fil-A",c:36},{n:"Grilled Chicken Club",b:"Chick-fil-A",c:37},{n:"Chicken Nuggets 8-ct",b:"Chick-fil-A",c:11},{n:"Chicken Nuggets 12-ct",b:"Chick-fil-A",c:17},{n:"Grilled Nuggets 8-ct",b:"Chick-fil-A",c:2},{n:"Chick-n-Strips 3-ct",b:"Chick-fil-A",c:22},
+        {n:"Chick-n-Strips 4-ct",b:"Chick-fil-A",c:29},{n:"Chicken Biscuit",b:"Chick-fil-A",c:37},{n:"Spicy Chicken Biscuit",b:"Chick-fil-A",c:38},{n:"Egg White Grill Sandwich",b:"Chick-fil-A",c:30},{n:"Hash Brown Scramble Burrito",b:"Chick-fil-A",c:45},{n:"Bacon Egg Cheese Biscuit",b:"Chick-fil-A",c:33},{n:"Waffle Potato Fries Small",b:"Chick-fil-A",c:37},{n:"Waffle Potato Fries Medium",b:"Chick-fil-A",c:58},{n:"Waffle Potato Fries Large",b:"Chick-fil-A",c:79},{n:"Mac & Cheese",b:"Chick-fil-A",c:29},
+        {n:"Coleslaw",b:"Chick-fil-A",c:16},{n:"Fruit Cup",b:"Chick-fil-A",c:15},{n:"Side Salad",b:"Chick-fil-A",c:5},{n:"Greek Yogurt Parfait",b:"Chick-fil-A",c:28},{n:"Chocolate Chip Cookie",b:"Chick-fil-A",c:47},{n:"Icedream Cone Small",b:"Chick-fil-A",c:27},{n:"Chocolate Milkshake 16oz",b:"Chick-fil-A",c:82},{n:"Vanilla Milkshake 16oz",b:"Chick-fil-A",c:73},{n:"Strawberry Milkshake 16oz",b:"Chick-fil-A",c:74},{n:"Peach Milkshake 16oz",b:"Chick-fil-A",c:74},
+
+        // --- Subway ---
+        {n:"Italian BMT 6-inch",b:"Subway",c:47},{n:"Turkey Breast 6-inch",b:"Subway",c:45},{n:"Meatball Marinara 6-inch",b:"Subway",c:51},{n:"Tuna 6-inch",b:"Subway",c:44},{n:"Veggie Delite 6-inch",b:"Subway",c:44},{n:"Chicken Teriyaki 6-inch",b:"Subway",c:54},{n:"Steak & Cheese 6-inch",b:"Subway",c:47},{n:"BLT 6-inch",b:"Subway",c:44},{n:"Black Forest Ham 6-inch",b:"Subway",c:45},{n:"Roast Beef 6-inch",b:"Subway",c:44},
+        {n:"Cold Cut Combo 6-inch",b:"Subway",c:46},{n:"Spicy Italian 6-inch",b:"Subway",c:46},{n:"Italian BMT Footlong",b:"Subway",c:94},{n:"Turkey Breast Footlong",b:"Subway",c:90},{n:"Meatball Marinara Footlong",b:"Subway",c:102},{n:"Veggie Delite Footlong",b:"Subway",c:88},{n:"Chocolate Chip Cookie",b:"Subway",c:30},{n:"Oatmeal Raisin Cookie",b:"Subway",c:29},{n:"Chips Baked Lay's",b:"Subway",c:23},
+
+        // --- KFC ---
+        {n:"Original Recipe Chicken Breast",b:"KFC",c:11},{n:"Extra Crispy Chicken Breast",b:"KFC",c:14},{n:"Original Recipe Chicken Thigh",b:"KFC",c:8},{n:"Original Recipe Chicken Wing",b:"KFC",c:5},{n:"Original Recipe Drumstick",b:"KFC",c:5},{n:"Grilled Chicken Breast",b:"KFC",c:0},{n:"Crispy Colonel Sandwich",b:"KFC",c:41},{n:"Classic Chicken Sandwich",b:"KFC",c:37},{n:"Spicy Chicken Sandwich",b:"KFC",c:38},{n:"Chicken Little Sandwich",b:"KFC",c:27},
+        {n:"Chicken Nuggets 8-pc",b:"KFC",c:15},{n:"Popcorn Chicken Individual",b:"KFC",c:15},{n:"Famous Bowl",b:"KFC",c:73},{n:"Pot Pie",b:"KFC",c:39},{n:"Mashed Potatoes with Gravy",b:"KFC",c:19},{n:"Mac & Cheese",b:"KFC",c:18},{n:"Coleslaw",b:"KFC",c:19},{n:"Corn on the Cob Small",b:"KFC",c:26},{n:"Biscuit",b:"KFC",c:22},{n:"Potato Wedges Small",b:"KFC",c:37},
+        {n:"Secret Recipe Fries Small",b:"KFC",c:30},{n:"Green Beans",b:"KFC",c:3},{n:"Chocolate Chip Cookie",b:"KFC",c:20},{n:"Cole Slaw",b:"KFC",c:19},
+
+        // --- Domino's ---
+        {n:"Hand Tossed Cheese Large 2-slices",b:"Domino's",c:52},{n:"Hand Tossed Pepperoni Large 2-slices",b:"Domino's",c:52},{n:"Hand Tossed Sausage Large 2-slices",b:"Domino's",c:54},{n:"Hand Tossed BBQ Chicken Large 2-slices",b:"Domino's",c:58},{n:"Thin Crust Cheese Large 2-slices",b:"Domino's",c:34},{n:"Thin Crust Pepperoni Large 2-slices",b:"Domino's",c:34},{n:"Brooklyn Style Cheese Large 2-slices",b:"Domino's",c:62},{n:"Brooklyn Style Pepperoni Large 2-slices",b:"Domino's",c:62},{n:"Pan Pizza Cheese Medium 2-slices",b:"Domino's",c:54},{n:"Pan Pizza Pepperoni Medium 2-slices",b:"Domino's",c:54},
+        {n:"Gluten Free Crust Cheese Small 1-slice",b:"Domino's",c:30},{n:"Philly Cheese Steak Sandwich",b:"Domino's",c:68},{n:"Italian Sandwich",b:"Domino's",c:68},{n:"Chicken Bacon Ranch Sandwich",b:"Domino's",c:64},{n:"Breadsticks 2-pc",b:"Domino's",c:34},{n:"Cheesy Bread 2-pc",b:"Domino's",c:36},{n:"Parmesan Bread Bites 8-pc",b:"Domino's",c:28},{n:"Lava Cake 1-pc",b:"Domino's",c:36},{n:"Cinnamon Bread Twists 2-pc",b:"Domino's",c:27},{n:"Marbled Cookie Brownie",b:"Domino's",c:37},
+        {n:"Pasta Primavera",b:"Domino's",c:63},{n:"Pasta Marinara",b:"Domino's",c:71},
+
+        // --- Pizza Hut ---
+        {n:"Hand Tossed Cheese Medium 2-slices",b:"Pizza Hut",c:58},{n:"Hand Tossed Pepperoni Medium 2-slices",b:"Pizza Hut",c:59},{n:"Hand Tossed Meat Lovers Medium 2-slices",b:"Pizza Hut",c:61},{n:"Thin & Crispy Cheese Medium 2-slices",b:"Pizza Hut",c:46},{n:"Thin & Crispy Pepperoni Medium 2-slices",b:"Pizza Hut",c:46},{n:"Stuffed Crust Cheese Large 2-slices",b:"Pizza Hut",c:68},{n:"Stuffed Crust Pepperoni Large 2-slices",b:"Pizza Hut",c:68},{n:"Pan Pizza Cheese Personal whole",b:"Pizza Hut",c:75},{n:"Original Pan Cheese Medium 2-slices",b:"Pizza Hut",c:68},{n:"WingStreet Traditional Wings 2-pc",b:"Pizza Hut",c:0},
+        {n:"WingStreet Boneless Wings 2-pc",b:"Pizza Hut",c:10},{n:"Breadsticks 1-pc",b:"Pizza Hut",c:26},{n:"Cheese Sticks 1-pc",b:"Pizza Hut",c:15},{n:"Cinnabon Mini Rolls 2-pc",b:"Pizza Hut",c:62},
+
+        // --- Chipotle ---
+        {n:"Burrito Chicken",b:"Chipotle",c:82},{n:"Burrito Steak",b:"Chipotle",c:82},{n:"Burrito Barbacoa",b:"Chipotle",c:81},{n:"Burrito Carnitas",b:"Chipotle",c:81},{n:"Burrito Bowl Chicken",b:"Chipotle",c:45},{n:"Burrito Bowl Steak",b:"Chipotle",c:45},{n:"Burrito Bowl Barbacoa",b:"Chipotle",c:42},{n:"Burrito Bowl Carnitas",b:"Chipotle",c:43},{n:"Burrito Bowl Sofritas Vegan",b:"Chipotle",c:47},{n:"Tacos Soft 3-pc Chicken",b:"Chipotle",c:43},
+        {n:"Tacos Crispy 3-pc Chicken",b:"Chipotle",c:40},{n:"Salad Bowl Chicken",b:"Chipotle",c:15},{n:"Quesadilla Chicken",b:"Chipotle",c:50},{n:"Chips & Guacamole",b:"Chipotle",c:74},{n:"Chips & Fresh Tomato Salsa",b:"Chipotle",c:60},{n:"Chips & Queso Blanco",b:"Chipotle",c:60},{n:"Side Guacamole",b:"Chipotle",c:8},{n:"Side White Rice",b:"Chipotle",c:40},{n:"Side Brown Rice",b:"Chipotle",c:37},{n:"Side Black Beans",b:"Chipotle",c:22},
+        {n:"Side Pinto Beans",b:"Chipotle",c:22},
+
+        // --- Sonic ---
+        {n:"Sonic Cheeseburger",b:"Sonic",c:42},{n:"SuperSonic Double Cheeseburger",b:"Sonic",c:45},{n:"Jr. Burger",b:"Sonic",c:29},{n:"Jr. Cheeseburger",b:"Sonic",c:29},{n:"Bacon Cheeseburger",b:"Sonic",c:43},{n:"Classic Chicken Sandwich",b:"Sonic",c:48},{n:"Crispy Chicken Sandwich",b:"Sonic",c:50},{n:"Grilled Chicken Sandwich",b:"Sonic",c:39},{n:"Chicken Strips 3-pc",b:"Sonic",c:30},{n:"Corn Dog",b:"Sonic",c:23},
+        {n:"Hot Dog",b:"Sonic",c:26},{n:"Chili Cheese Coney",b:"Sonic",c:36},{n:"Tater Tots Small",b:"Sonic",c:28},{n:"Tater Tots Medium",b:"Sonic",c:41},{n:"Tater Tots Large",b:"Sonic",c:57},{n:"Fries Small",b:"Sonic",c:30},{n:"Fries Medium",b:"Sonic",c:42},{n:"Onion Rings Small",b:"Sonic",c:39},{n:"Mozzarella Sticks",b:"Sonic",c:39},{n:"Chili Cheese Tots Small",b:"Sonic",c:33},
+        {n:"Vanilla Shake Medium",b:"Sonic",c:82},{n:"Chocolate Shake Medium",b:"Sonic",c:96},{n:"Strawberry Shake Medium",b:"Sonic",c:99},{n:"Hot Fudge Sundae",b:"Sonic",c:58},{n:"Strawberry Sundae",b:"Sonic",c:60},{n:"Banana Split",b:"Sonic",c:65},
+
+        // --- Arby's ---
+        {n:"Classic Roast Beef",b:"Arby's",c:35},{n:"Half Pound Roast Beef",b:"Arby's",c:37},{n:"Double Roast Beef",b:"Arby's",c:36},{n:"Jr. Roast Beef",b:"Arby's",c:32},{n:"Beef 'N Cheddar Classic",b:"Arby's",c:45},{n:"Beef 'N Cheddar Mid",b:"Arby's",c:46},{n:"French Dip",b:"Arby's",c:42},{n:"Reuben",b:"Arby's",c:46},{n:"Turkey Ranch & Bacon Classic",b:"Arby's",c:44},{n:"Crispy Fish Sandwich",b:"Arby's",c:41},
+        {n:"Chicken Bacon Swiss Crispy",b:"Arby's",c:48},{n:"Corned Beef Reuben",b:"Arby's",c:41},{n:"Curly Fries Small",b:"Arby's",c:36},{n:"Curly Fries Medium",b:"Arby's",c:50},{n:"Curly Fries Large",b:"Arby's",c:70},{n:"Crinkle Fries Small",b:"Arby's",c:40},{n:"Potato Cakes 2-pc",b:"Arby's",c:22},{n:"Mozzarella Sticks 4-pc",b:"Arby's",c:36},{n:"Jalapeno Bites 5-pc",b:"Arby's",c:30},{n:"Chocolate Shake Medium",b:"Arby's",c:76},
+        {n:"Vanilla Shake Medium",b:"Arby's",c:69},{n:"Apple Turnover",b:"Arby's",c:46},
+
+        // --- Jack in the Box ---
+        {n:"Jumbo Jack",b:"Jack in the Box",c:43},{n:"Jumbo Jack with Cheese",b:"Jack in the Box",c:45},{n:"Ultimate Cheeseburger",b:"Jack in the Box",c:41},{n:"Sourdough Jack",b:"Jack in the Box",c:36},{n:"Jr. Cheeseburger",b:"Jack in the Box",c:30},{n:"Hamburger",b:"Jack in the Box",c:28},{n:"Spicy Crispy Chicken Sandwich",b:"Jack in the Box",c:48},{n:"Crispy Chicken Sandwich",b:"Jack in the Box",c:47},{n:"Chicken Strips 3-pc",b:"Jack in the Box",c:27},{n:"Breakfast Jack",b:"Jack in the Box",c:29},
+        {n:"Supreme Croissant Sausage Egg Cheese",b:"Jack in the Box",c:36},{n:"Egg & Cheese Biscuit",b:"Jack in the Box",c:33},{n:"Hash Browns 2-pc",b:"Jack in the Box",c:16},{n:"Monster Taco",b:"Jack in the Box",c:17},{n:"Regular Taco",b:"Jack in the Box",c:15},{n:"Mini Tacos 3-pc",b:"Jack in the Box",c:30},{n:"Small Fries",b:"Jack in the Box",c:32},{n:"Medium Fries",b:"Jack in the Box",c:45},{n:"Large Fries",b:"Jack in the Box",c:55},{n:"Onion Rings Small",b:"Jack in the Box",c:49},
+        {n:"Stuffed Jalapeños 3-pc",b:"Jack in the Box",c:27},{n:"Egg Rolls 2-pc",b:"Jack in the Box",c:48},{n:"Chocolate Shake Medium",b:"Jack in the Box",c:80},{n:"Vanilla Shake Medium",b:"Jack in the Box",c:70},
+
+        // --- Panera Bread ---
+        {n:"Plain Bagel",b:"Panera",c:57},{n:"Cinnamon Crunch Bagel",b:"Panera",c:73},{n:"Blueberry Bagel",b:"Panera",c:57},{n:"Everything Bagel",b:"Panera",c:58},{n:"Blueberry Muffin",b:"Panera",c:55},{n:"Chocolate Chip Muffin",b:"Panera",c:60},{n:"Butter Croissant",b:"Panera",c:27},{n:"Chocolate Croissant",b:"Panera",c:34},{n:"Cranberry Orange Scone",b:"Panera",c:54},{n:"Cinnamon Roll",b:"Panera",c:75},
+        {n:"Bear Claw",b:"Panera",c:52},{n:"Chocolate Chip Cookie",b:"Panera",c:56},{n:"Brownie",b:"Panera",c:52},{n:"Lemon Drop Cookie",b:"Panera",c:53},{n:"Chipotle Chicken Avocado Melt",b:"Panera",c:60},{n:"Bacon Turkey Bravo on Tomato Basil",b:"Panera",c:57},{n:"Frontega Chicken Panini",b:"Panera",c:59},{n:"Tuna Salad on Sourdough",b:"Panera",c:52},{n:"Smokehouse BBQ Chicken Panini",b:"Panera",c:68},{n:"Broccoli Cheddar Soup Bowl",b:"Panera",c:29},
+        {n:"French Onion Soup",b:"Panera",c:24},{n:"Chicken Noodle Soup Cup",b:"Panera",c:19},{n:"Creamy Tomato Soup Bowl",b:"Panera",c:34},{n:"Mac & Cheese",b:"Panera",c:70},{n:"Baja Bowl",b:"Panera",c:62},{n:"Mediterranean Bowl",b:"Panera",c:55},{n:"Green Goddess Cobb Salad with Chicken",b:"Panera",c:22},{n:"Caesar Salad Half",b:"Panera",c:15},{n:"Fuji Apple Chicken Salad Half",b:"Panera",c:38},
+
+        // --- Popeyes ---
+        {n:"Classic Chicken Sandwich",b:"Popeyes",c:50},{n:"Spicy Chicken Sandwich",b:"Popeyes",c:50},{n:"Blackened Chicken Sandwich",b:"Popeyes",c:46},{n:"Chicken Tenders 3-pc",b:"Popeyes",c:16},{n:"Chicken Tenders 5-pc",b:"Popeyes",c:26},{n:"Chicken Breast Mild",b:"Popeyes",c:12},{n:"Chicken Breast Spicy",b:"Popeyes",c:12},{n:"Chicken Thigh Mild",b:"Popeyes",c:12},{n:"Chicken Wing Mild",b:"Popeyes",c:13},{n:"Chicken Leg Mild",b:"Popeyes",c:8},
+        {n:"Red Beans & Rice Regular",b:"Popeyes",c:21},{n:"Mashed Potatoes with Cajun Gravy",b:"Popeyes",c:16},{n:"Cajun Fries Small",b:"Popeyes",c:32},{n:"Cajun Fries Regular",b:"Popeyes",c:43},{n:"Cajun Fries Large",b:"Popeyes",c:60},{n:"Mac & Cheese",b:"Popeyes",c:21},{n:"Coleslaw",b:"Popeyes",c:13},{n:"Biscuit",b:"Popeyes",c:25},{n:"Corn on the Cob",b:"Popeyes",c:28},{n:"Apple Pie",b:"Popeyes",c:47},
+
+        // --- Dairy Queen ---
+        {n:"DQ Cheeseburger",b:"Dairy Queen",c:43},{n:"1/4 lb GrillBurger with Cheese",b:"Dairy Queen",c:43},{n:"Double with Cheese",b:"Dairy Queen",c:43},{n:"Bacon Double",b:"Dairy Queen",c:43},{n:"Crispy Chicken Sandwich",b:"Dairy Queen",c:42},{n:"Grilled Chicken Sandwich",b:"Dairy Queen",c:38},{n:"Chicken Strip Basket 4-pc",b:"Dairy Queen",c:80},{n:"Small Fries",b:"Dairy Queen",c:34},{n:"Medium Fries",b:"Dairy Queen",c:46},{n:"Onion Rings Medium",b:"Dairy Queen",c:47},
+        {n:"Blizzard Oreo Cookie Medium",b:"Dairy Queen",c:84},{n:"Blizzard Reese's PB Cup Medium",b:"Dairy Queen",c:91},{n:"Blizzard M&M Medium",b:"Dairy Queen",c:93},{n:"Blizzard Brownie Batter Medium",b:"Dairy Queen",c:89},{n:"Blizzard Snickers Medium",b:"Dairy Queen",c:90},{n:"Blizzard Choc Chip Cookie Dough Medium",b:"Dairy Queen",c:88},{n:"Vanilla Soft Serve Cone Small",b:"Dairy Queen",c:30},{n:"Vanilla Soft Serve Cone Medium",b:"Dairy Queen",c:40},{n:"Dipped Cone Medium",b:"Dairy Queen",c:43},{n:"Hot Fudge Sundae Medium",b:"Dairy Queen",c:55},
+        {n:"Banana Split",b:"Dairy Queen",c:92},{n:"Misty Slush Small",b:"Dairy Queen",c:46},{n:"Chocolate Shake Small",b:"Dairy Queen",c:68},{n:"Vanilla Shake Small",b:"Dairy Queen",c:65},
+
+        // --- Five Guys ---
+        {n:"Little Hamburger",b:"Five Guys",c:39},{n:"Little Cheeseburger",b:"Five Guys",c:39},{n:"Hamburger",b:"Five Guys",c:40},{n:"Cheeseburger",b:"Five Guys",c:40},{n:"Bacon Burger",b:"Five Guys",c:39},{n:"Bacon Cheeseburger",b:"Five Guys",c:40},{n:"Veggie Sandwich",b:"Five Guys",c:60},{n:"Hot Dog",b:"Five Guys",c:26},{n:"Kosher Hot Dog",b:"Five Guys",c:22},{n:"Bacon Dog",b:"Five Guys",c:26},
+        {n:"Cheese Dog",b:"Five Guys",c:28},{n:"Little BLT",b:"Five Guys",c:27},{n:"Regular Fries",b:"Five Guys",c:43},{n:"Large Fries",b:"Five Guys",c:54},{n:"Cajun Fries Regular",b:"Five Guys",c:44},{n:"Cajun Fries Large",b:"Five Guys",c:55},
+
+        // --- In-N-Out ---
+        {n:"Hamburger",b:"In-N-Out",c:41},{n:"Cheeseburger",b:"In-N-Out",c:41},{n:"Double-Double",b:"In-N-Out",c:39},{n:"Double-Double Animal Style",b:"In-N-Out",c:39},{n:"3x3",b:"In-N-Out",c:41},{n:"4x4",b:"In-N-Out",c:42},{n:"Protein Style Burger no bun",b:"In-N-Out",c:11},{n:"Grilled Cheese",b:"In-N-Out",c:41},{n:"Fries Regular",b:"In-N-Out",c:54},{n:"Animal Style Fries",b:"In-N-Out",c:60},
+        {n:"Chocolate Shake",b:"In-N-Out",c:83},{n:"Vanilla Shake",b:"In-N-Out",c:78},{n:"Strawberry Shake",b:"In-N-Out",c:80},{n:"Lemonade",b:"In-N-Out",c:52},
+
+        // --- Shake Shack ---
+        {n:"ShackBurger",b:"Shake Shack",c:29},{n:"SmokeShack",b:"Shake Shack",c:29},{n:"ShackStack",b:"Shake Shack",c:30},{n:"Cheeseburger",b:"Shake Shack",c:28},{n:"Hamburger",b:"Shake Shack",c:27},{n:"Veggie Shack",b:"Shake Shack",c:45},{n:"Crispy Chicken Shack",b:"Shake Shack",c:47},{n:"Chick'n Shack",b:"Shake Shack",c:46},{n:"Grilled Chicken",b:"Shake Shack",c:28},{n:"Fries Regular",b:"Shake Shack",c:29},
+        {n:"Cheese Fries Regular",b:"Shake Shack",c:38},{n:"Bacon Cheese Fries Regular",b:"Shake Shack",c:38},{n:"Chocolate Shake Medium",b:"Shake Shack",c:72},{n:"Vanilla Shake Medium",b:"Shake Shack",c:64},{n:"Strawberry Shake Medium",b:"Shake Shack",c:67},{n:"Black & White Shake Medium",b:"Shake Shack",c:73},{n:"Frozen Custard Chocolate Cone",b:"Shake Shack",c:43},
+
+        // --- Whataburger ---
+        {n:"Whataburger",b:"Whataburger",c:58},{n:"Double Meat Whataburger",b:"Whataburger",c:60},{n:"Triple Meat Whataburger",b:"Whataburger",c:60},{n:"Bacon & Cheese Whataburger",b:"Whataburger",c:60},{n:"Jalapeno & Cheese Whataburger",b:"Whataburger",c:58},{n:"Mushroom Swiss Burger",b:"Whataburger",c:59},{n:"A.1. Thick & Hearty Burger",b:"Whataburger",c:62},{n:"Monterey Melt",b:"Whataburger",c:64},{n:"Crispy Chicken Sandwich",b:"Whataburger",c:57},{n:"Spicy Chicken Sandwich",b:"Whataburger",c:57},
+        {n:"Grilled Chicken Sandwich",b:"Whataburger",c:47},{n:"Chicken Strips 2-pc",b:"Whataburger",c:22},{n:"Chicken Strips 3-pc",b:"Whataburger",c:33},{n:"Breakfast on a Bun Sausage Egg Cheese",b:"Whataburger",c:33},{n:"Taquito Sausage Egg Cheese",b:"Whataburger",c:25},{n:"Honey Butter Chicken Biscuit",b:"Whataburger",c:53},{n:"Cinnamon Roll",b:"Whataburger",c:58},{n:"Hash Brown Sticks",b:"Whataburger",c:24},{n:"Small Fries",b:"Whataburger",c:34},{n:"Medium Fries",b:"Whataburger",c:45},
+        {n:"Large Fries",b:"Whataburger",c:56},{n:"Onion Rings Small",b:"Whataburger",c:44},{n:"Apple & Cranberry Chicken Salad",b:"Whataburger",c:30},{n:"Chocolate Shake Medium",b:"Whataburger",c:93},{n:"Vanilla Shake Medium",b:"Whataburger",c:82},{n:"Strawberry Shake Medium",b:"Whataburger",c:94},
+
+        // --- Wingstop ---
+        {n:"Classic Wings 6-pc",b:"Wingstop",c:0},{n:"Classic Wings 10-pc",b:"Wingstop",c:0},{n:"Classic Wings 15-pc",b:"Wingstop",c:0},{n:"Boneless Wings 6-pc",b:"Wingstop",c:54},{n:"Boneless Wings 10-pc",b:"Wingstop",c:90},{n:"Chicken Tenders 3-pc",b:"Wingstop",c:18},{n:"Chicken Tenders 5-pc",b:"Wingstop",c:30},{n:"Seasoned Fries Regular",b:"Wingstop",c:56},{n:"Seasoned Fries Large",b:"Wingstop",c:67},{n:"Cajun Fried Corn",b:"Wingstop",c:24},
+        {n:"Coleslaw",b:"Wingstop",c:19},{n:"Louisiana Voodoo Fries",b:"Wingstop",c:66},{n:"Ranch Fries",b:"Wingstop",c:62},{n:"Veggie Sticks",b:"Wingstop",c:8},
+
+        // --- Buffalo Wild Wings ---
+        {n:"Traditional Wings 6-pc",b:"Buffalo Wild Wings",c:0},{n:"Traditional Wings 12-pc",b:"Buffalo Wild Wings",c:0},{n:"Boneless Wings 6-pc",b:"Buffalo Wild Wings",c:36},{n:"Boneless Wings 12-pc",b:"Buffalo Wild Wings",c:72},{n:"Boneless Wings 18-pc",b:"Buffalo Wild Wings",c:108},{n:"Chicken Tenders 4-pc",b:"Buffalo Wild Wings",c:48},{n:"Cheese Burger",b:"Buffalo Wild Wings",c:55},{n:"Barbecue Bacon Smash Burger",b:"Buffalo Wild Wings",c:59},{n:"French Fries Regular",b:"Buffalo Wild Wings",c:57},{n:"Onion Rings Regular",b:"Buffalo Wild Wings",c:60},
+        {n:"Fried Pickles",b:"Buffalo Wild Wings",c:41},{n:"Street Corn",b:"Buffalo Wild Wings",c:37},{n:"Chips & Salsa",b:"Buffalo Wild Wings",c:47},{n:"Mac & Cheese",b:"Buffalo Wild Wings",c:46},{n:"Soft Pretzel",b:"Buffalo Wild Wings",c:80},{n:"Mozzarella Sticks",b:"Buffalo Wild Wings",c:40},
+
+        // --- Panda Express ---
+        {n:"Orange Chicken 1 serving",b:"Panda Express",c:26},{n:"Beijing Beef 1 serving",b:"Panda Express",c:36},{n:"Kung Pao Chicken 1 serving",b:"Panda Express",c:14},{n:"Broccoli Beef 1 serving",b:"Panda Express",c:13},{n:"Honey Walnut Shrimp 1 serving",b:"Panda Express",c:19},{n:"SweetFire Chicken Breast 1 serving",b:"Panda Express",c:33},{n:"Mushroom Chicken 1 serving",b:"Panda Express",c:11},{n:"Black Pepper Angus Steak 1 serving",b:"Panda Express",c:11},{n:"String Bean Chicken Breast 1 serving",b:"Panda Express",c:12},{n:"Chow Mein 1 serving",b:"Panda Express",c:61},
+        {n:"Fried Rice 1 serving",b:"Panda Express",c:72},{n:"White Steamed Rice 1 serving",b:"Panda Express",c:87},{n:"Brown Steamed Rice 1 serving",b:"Panda Express",c:88},{n:"Mixed Vegetables 1 serving",b:"Panda Express",c:9},{n:"Super Greens 1 serving",b:"Panda Express",c:8},{n:"Egg Roll 1-pc",b:"Panda Express",c:16},{n:"Cream Cheese Rangoon 2-pc",b:"Panda Express",c:16},{n:"Apple Pie Roll 1-pc",b:"Panda Express",c:22},{n:"Spring Roll 1-pc",b:"Panda Express",c:16},{n:"Bowl entrée + 1 side",b:"Panda Express",c:83},
+        {n:"Plate entrée + 2 sides",b:"Panda Express",c:133},
+
+        // --- Raising Cane's ---
+        {n:"Chicken Finger 1-pc",b:"Raising Cane's",c:9},{n:"3-Finger Combo",b:"Raising Cane's",c:30},{n:"Box Combo 4-pc",b:"Raising Cane's",c:33},{n:"Caniac Combo 6-pc",b:"Raising Cane's",c:45},{n:"Crinkle-Cut Fries Regular",b:"Raising Cane's",c:54},{n:"Coleslaw",b:"Raising Cane's",c:15},{n:"Texas Toast 1-slice",b:"Raising Cane's",c:26},{n:"Cane's Sauce",b:"Raising Cane's",c:2},
+
+        // --- Dunkin' (food) ---
+        {n:"Glazed Donut",b:"Dunkin'",c:30},{n:"Boston Kreme Donut",b:"Dunkin'",c:42},{n:"Strawberry Frosted Donut",b:"Dunkin'",c:32},{n:"Chocolate Glazed Donut",b:"Dunkin'",c:32},{n:"Jelly Donut",b:"Dunkin'",c:36},{n:"Powdered Sugar Donut",b:"Dunkin'",c:27},{n:"Chocolate Frosted Donut",b:"Dunkin'",c:31},{n:"Blueberry Muffin",b:"Dunkin'",c:52},{n:"Corn Muffin",b:"Dunkin'",c:51},{n:"Plain Bagel",b:"Dunkin'",c:71},
+        {n:"Everything Bagel",b:"Dunkin'",c:72},{n:"Cinnamon Raisin Bagel",b:"Dunkin'",c:78},{n:"Butter Croissant",b:"Dunkin'",c:29},{n:"Sausage Egg Cheese on Croissant",b:"Dunkin'",c:31},{n:"Egg & Cheese on Croissant",b:"Dunkin'",c:30},{n:"Egg & Cheese on English Muffin",b:"Dunkin'",c:30},{n:"Wake-Up Wrap Egg & Cheese",b:"Dunkin'",c:18},{n:"Bacon Egg Cheese Breakfast Sandwich",b:"Dunkin'",c:35},{n:"Hash Browns",b:"Dunkin'",c:22},{n:"Avocado Toast",b:"Dunkin'",c:36},
+        {n:"Brownie",b:"Dunkin'",c:42},{n:"Chocolate Chip Cookie",b:"Dunkin'",c:40},{n:"Snackin' Bacon",b:"Dunkin'",c:1},
+
+        // --- Starbucks (food) ---
+        {n:"Butter Croissant",b:"Starbucks",c:32},{n:"Chocolate Croissant",b:"Starbucks",c:39},{n:"Almond Croissant",b:"Starbucks",c:46},{n:"Cheese Danish",b:"Starbucks",c:33},{n:"Blueberry Muffin",b:"Starbucks",c:63},{n:"Banana Nut Bread Slice",b:"Starbucks",c:48},{n:"Lemon Loaf Slice",b:"Starbucks",c:42},{n:"Pumpkin Loaf Slice",b:"Starbucks",c:55},{n:"Iced Lemon Pound Cake",b:"Starbucks",c:47},{n:"Chocolate Cake Pop",b:"Starbucks",c:23},
+        {n:"Birthday Cake Pop",b:"Starbucks",c:26},{n:"Petite Vanilla Scone",b:"Starbucks",c:18},{n:"Plain Bagel",b:"Starbucks",c:56},{n:"Everything Bagel",b:"Starbucks",c:59},{n:"Bacon Gouda Egg Sandwich",b:"Starbucks",c:31},{n:"Sausage Cheddar Egg Sandwich",b:"Starbucks",c:34},{n:"Spinach Feta Egg Wrap",b:"Starbucks",c:33},{n:"Ham & Swiss Panini",b:"Starbucks",c:47},{n:"Chicken Caprese Panini",b:"Starbucks",c:42},{n:"Turkey Pesto Panini",b:"Starbucks",c:44},
+        {n:"Impossible Breakfast Sandwich",b:"Starbucks",c:36},{n:"Bacon Gruyere Egg Bites",b:"Starbucks",c:9},{n:"Egg White Roasted Red Pepper Egg Bites",b:"Starbucks",c:9},
+
+        // --- IHOP ---
+        {n:"Original Buttermilk Pancakes 2-pc",b:"IHOP",c:54},{n:"Short Stack Pancakes 3-pc",b:"IHOP",c:81},{n:"Full Stack Pancakes 4-pc",b:"IHOP",c:108},{n:"Blueberry Pancakes 2-pc",b:"IHOP",c:62},{n:"Strawberry Pancakes 2-pc",b:"IHOP",c:65},{n:"Banana Nut Pancakes 2-pc",b:"IHOP",c:63},{n:"Chocolate Chip Pancakes 2-pc",b:"IHOP",c:64},{n:"New York Cheesecake Pancakes 2-pc",b:"IHOP",c:73},{n:"Stuffed French Toast Strawberry",b:"IHOP",c:83},{n:"Original French Toast",b:"IHOP",c:73},
+        {n:"Belgian Waffle",b:"IHOP",c:56},{n:"Chicken & Waffles",b:"IHOP",c:74},{n:"Big Steak Omelette",b:"IHOP",c:14},{n:"Bacon Temptation Omelette",b:"IHOP",c:14},{n:"Hash Browns",b:"IHOP",c:26},{n:"Thick-Cut Bacon",b:"IHOP",c:0},{n:"Country Fried Steak & Eggs",b:"IHOP",c:80},{n:"New York Cheesecake",b:"IHOP",c:57},{n:"Classic Burger",b:"IHOP",c:45},
+
+        // --- Denny's ---
+        {n:"Grand Slam",b:"Denny's",c:67},{n:"Lumberjack Slam",b:"Denny's",c:71},{n:"Original Slam",b:"Denny's",c:62},{n:"French Toast Slam",b:"Denny's",c:80},{n:"Buttermilk Pancakes 2-pc",b:"Denny's",c:56},{n:"Blueberry Pancakes 2-pc",b:"Denny's",c:65},{n:"Chocolate Chip Pancakes 2-pc",b:"Denny's",c:68},{n:"Cinnamon Roll Pancakes 2-pc",b:"Denny's",c:73},{n:"Hash Browns",b:"Denny's",c:27},{n:"Toast 2-slices",b:"Denny's",c:30},
+        {n:"English Muffin",b:"Denny's",c:27},{n:"Classic Cheeseburger",b:"Denny's",c:47},{n:"Bacon Cheeseburger",b:"Denny's",c:47},{n:"Double Cheeseburger",b:"Denny's",c:48},{n:"Chicken Strips 4-pc",b:"Denny's",c:36},{n:"Fish & Chips",b:"Denny's",c:69},{n:"Apple Pie",b:"Denny's",c:53},{n:"Pancake Sundae",b:"Denny's",c:90},
+
+        // --- Waffle House ---
+        {n:"Original Waffle",b:"Waffle House",c:25},{n:"Waffle with Blueberries",b:"Waffle House",c:35},{n:"Waffle with Pecans",b:"Waffle House",c:27},{n:"Waffle with Bacon",b:"Waffle House",c:25},{n:"Plain Hashbrowns",b:"Waffle House",c:25},{n:"Scattered Smothered Covered Hashbrowns",b:"Waffle House",c:31},{n:"Hashbrown Bowl",b:"Waffle House",c:32},{n:"Bacon Egg Cheese on Toast",b:"Waffle House",c:31},{n:"Ham Egg Cheese on Toast",b:"Waffle House",c:31},{n:"Pork Chop & Eggs Plate",b:"Waffle House",c:14},
+        {n:"Grits Plain",b:"Waffle House",c:22},{n:"Sliced Tomatoes",b:"Waffle House",c:6},
+
+        // --- El Pollo Loco ---
+        {n:"Chicken Leg & Thigh",b:"El Pollo Loco",c:10},{n:"Chicken Burrito",b:"El Pollo Loco",c:62},{n:"Chicken Bowl",b:"El Pollo Loco",c:55},{n:"Double Chicken Avocado Salad",b:"El Pollo Loco",c:25},{n:"Chicken Taco Crispy",b:"El Pollo Loco",c:22},{n:"Chicken Taco Soft",b:"El Pollo Loco",c:22},{n:"Chicken Tamale",b:"El Pollo Loco",c:27},{n:"Pinto Beans",b:"El Pollo Loco",c:25},{n:"Spanish Rice",b:"El Pollo Loco",c:34},{n:"Coleslaw",b:"El Pollo Loco",c:12},
+        {n:"Tortilla Chips",b:"El Pollo Loco",c:19},{n:"Macaroni & Cheese",b:"El Pollo Loco",c:25},{n:"Loaded Nachos",b:"El Pollo Loco",c:42},
+
+        // --- Del Taco ---
+        {n:"Del Taco with Cheese",b:"Del Taco",c:22},{n:"Spicy Del Taco with Cheese",b:"Del Taco",c:22},{n:"Crunchy Taco",b:"Del Taco",c:13},{n:"Soft Taco Chicken",b:"Del Taco",c:21},{n:"Epic Shredded Beef Burrito",b:"Del Taco",c:74},{n:"Bean & Cheese Burrito",b:"Del Taco",c:60},{n:"Epic Chicken Avocado Burrito",b:"Del Taco",c:71},{n:"Del Beef Burrito",b:"Del Taco",c:72},{n:"Breakfast Burrito",b:"Del Taco",c:38},{n:"Chicken Quesadilla",b:"Del Taco",c:50},
+        {n:"Cheese Quesadilla",b:"Del Taco",c:47},{n:"Del Fries Small",b:"Del Taco",c:39},{n:"Crinkle Cut Fries Small",b:"Del Taco",c:40},{n:"Nachos",b:"Del Taco",c:43},{n:"Churro",b:"Del Taco",c:32},{n:"Caramel Cheesecake Bites",b:"Del Taco",c:35},
+
+        // --- Carl's Jr ---
+        {n:"Famous Star with Cheese",b:"Carl's Jr",c:50},{n:"Super Star with Cheese",b:"Carl's Jr",c:51},{n:"Western Bacon Cheeseburger",b:"Carl's Jr",c:62},{n:"Double Western Bacon Cheeseburger",b:"Carl's Jr",c:64},{n:"Mushroom & Swiss Burger",b:"Carl's Jr",c:44},{n:"Jalapeño Burger",b:"Carl's Jr",c:43},{n:"Crispy Chicken Sandwich",b:"Carl's Jr",c:52},{n:"Hand-Breaded Chicken Tender Sandwich",b:"Carl's Jr",c:47},{n:"Chicken Stars 5-pc",b:"Carl's Jr",c:11},{n:"Monster Biscuit",b:"Carl's Jr",c:36},
+        {n:"Bacon Egg Cheese Biscuit",b:"Carl's Jr",c:30},{n:"Loaded Breakfast Burrito",b:"Carl's Jr",c:36},{n:"Hash Rounds Small",b:"Carl's Jr",c:29},{n:"Natural-Cut Fries Small",b:"Carl's Jr",c:43},{n:"Onion Rings Small",b:"Carl's Jr",c:40},{n:"Chocolate Shake Medium",b:"Carl's Jr",c:79},
+
+        // --- White Castle ---
+        {n:"Original Slider",b:"White Castle",c:13},{n:"Cheeseburger Slider",b:"White Castle",c:14},{n:"Double Slider",b:"White Castle",c:14},{n:"Chicken Rings 6-pc",b:"White Castle",c:12},{n:"Chicken Slider",b:"White Castle",c:19},{n:"Fish Slider",b:"White Castle",c:18},{n:"Veggie Slider",b:"White Castle",c:19},{n:"Small Fries",b:"White Castle",c:28},{n:"Medium Fries",b:"White Castle",c:44},{n:"Onion Chips",b:"White Castle",c:16},
+        {n:"Mozzarella Sticks 3-pc",b:"White Castle",c:26},{n:"Chocolate Shake Small",b:"White Castle",c:60},{n:"Waffle Egg Cheese Slider",b:"White Castle",c:24},{n:"Breakfast Slider Egg Cheese",b:"White Castle",c:15},
+
+        // --- Culver's ---
+        {n:"ButterBurger Original",b:"Culver's",c:35},{n:"ButterBurger with Cheese",b:"Culver's",c:35},{n:"ButterBurger Double with Cheese",b:"Culver's",c:37},{n:"Bacon Deluxe Single",b:"Culver's",c:36},{n:"Mushroom & Swiss ButterBurger",b:"Culver's",c:37},{n:"Sourdough Melt",b:"Culver's",c:41},{n:"Chicken Sandwich",b:"Culver's",c:46},{n:"Spicy Chicken Sandwich",b:"Culver's",c:47},{n:"Chicken Tenders 3-pc",b:"Culver's",c:22},{n:"Fish Sandwich",b:"Culver's",c:43},
+        {n:"Crinkle Cut Fries Small",b:"Culver's",c:35},{n:"Cheese Curds Regular",b:"Culver's",c:36},{n:"Onion Rings Regular",b:"Culver's",c:45},{n:"Concrete Mixer Oreo Small",b:"Culver's",c:68},{n:"Concrete Mixer Reese's Small",b:"Culver's",c:68},{n:"Fresh Frozen Custard Cone Vanilla Small",b:"Culver's",c:26},
+
+        // --- Zaxby's ---
+        {n:"Zaxby's Sandwich",b:"Zaxby's",c:50},{n:"Spicy Zaxby's Sandwich",b:"Zaxby's",c:50},{n:"Chicken Fingerz 5-pc",b:"Zaxby's",c:30},{n:"Big Zax Snak Meal",b:"Zaxby's",c:38},{n:"Wings & Things 5-pc",b:"Zaxby's",c:8},{n:"Crinkle Fries Regular",b:"Zaxby's",c:46},{n:"Coleslaw",b:"Zaxby's",c:14},{n:"Texas Toast",b:"Zaxby's",c:23},{n:"Tater Chips",b:"Zaxby's",c:39},{n:"Celery & Carrots",b:"Zaxby's",c:8},
+        {n:"Chocolate Cake Slice",b:"Zaxby's",c:66},
+      ];
+      ff.forEach(function(f) { db.push({name: f.n, brand: f.b, carbs: f.c, category: "fastfood"}); });
+
+      // ==================== SNACKS ====================
+      var sn = [
+        // Lay's
+        {n:"Classic (1 oz bag)",b:"Lay's",c:15},{n:"Barbecue (1 oz)",b:"Lay's",c:15},{n:"Sour Cream & Onion (1 oz)",b:"Lay's",c:15},{n:"Salt & Vinegar (1 oz)",b:"Lay's",c:16},{n:"Cheddar & Sour Cream (1 oz)",b:"Lay's",c:15},{n:"Baked Original (1 oz)",b:"Lay's",c:23},{n:"Kettle Cooked Original (1 oz)",b:"Lay's",c:16},{n:"Wavy Original (1 oz)",b:"Lay's",c:15},
+        // Doritos
+        {n:"Nacho Cheese (1 oz)",b:"Doritos",c:18},{n:"Cool Ranch (1 oz)",b:"Doritos",c:18},{n:"Spicy Sweet Chili (1 oz)",b:"Doritos",c:18},{n:"Flamin' Hot (1 oz)",b:"Doritos",c:17},{n:"Dinamita Chile Limon (1 oz)",b:"Doritos",c:17},{n:"Poppin' Jalapeño (1 oz)",b:"Doritos",c:18},
+        // Cheetos
+        {n:"Crunchy (1 oz)",b:"Cheetos",c:15},{n:"Flamin' Hot (1 oz)",b:"Cheetos",c:15},{n:"Puffs (1 oz)",b:"Cheetos",c:13},{n:"Flamin' Hot Puffs (1 oz)",b:"Cheetos",c:13},{n:"White Cheddar Puffs (1 oz)",b:"Cheetos",c:13},{n:"Crunchy XXtra Flamin Hot (1 oz)",b:"Cheetos",c:15},
+        // Pringles
+        {n:"Original (1 oz / 16 crisps)",b:"Pringles",c:15},{n:"Sour Cream & Onion (1 oz)",b:"Pringles",c:15},{n:"Cheddar Cheese (1 oz)",b:"Pringles",c:15},{n:"BBQ (1 oz)",b:"Pringles",c:16},{n:"Pizza (1 oz)",b:"Pringles",c:16},{n:"Ranch (1 oz)",b:"Pringles",c:15},
+        // Tostitos
+        {n:"Scoops (1 oz / 13 chips)",b:"Tostitos",c:19},{n:"Restaurant Style (1 oz / 7 chips)",b:"Tostitos",c:19},{n:"Salsa (2 Tbsp)",b:"Tostitos",c:2},{n:"Queso (2 Tbsp)",b:"Tostitos",c:3},{n:"Hint of Lime (1 oz)",b:"Tostitos",c:18},{n:"Cantina Thin & Crispy (1 oz)",b:"Tostitos",c:19},
+        // Goldfish
+        {n:"Cheddar (55 pieces)",b:"Goldfish",c:20},{n:"Flavor Blasted Xtra Cheddar (55pc)",b:"Goldfish",c:20},{n:"Pizza (55pc)",b:"Goldfish",c:19},{n:"Pretzel (43pc)",b:"Goldfish",c:22},{n:"Colors (55pc)",b:"Goldfish",c:20},
+        // Oreo
+        {n:"Original (3 cookies)",b:"Oreo",c:25},{n:"Double Stuf (2 cookies)",b:"Oreo",c:21},{n:"Thins (4 cookies)",b:"Oreo",c:21},{n:"Golden (3 cookies)",b:"Oreo",c:25},{n:"Mega Stuf (2 cookies)",b:"Oreo",c:25},{n:"Mini (1 pouch / 1 oz)",b:"Oreo",c:18},
+        // Chips Ahoy
+        {n:"Original (3 cookies)",b:"Chips Ahoy!",c:22},{n:"Chewy (2 cookies)",b:"Chips Ahoy!",c:20},{n:"Chunky (1 cookie)",b:"Chips Ahoy!",c:20},{n:"Thins (4 cookies)",b:"Chips Ahoy!",c:21},
+        // Ritz
+        {n:"Original Crackers (5 crackers)",b:"Ritz",c:10},{n:"Cheese Sandwich Crackers (6pc pkg)",b:"Ritz",c:24},{n:"Peanut Butter Sandwich (6pc)",b:"Ritz",c:22},{n:"Toasted Chips Original (1 oz)",b:"Ritz",c:19},{n:"Bits Cheese (1 oz)",b:"Ritz",c:17},
+        // Triscuit
+        {n:"Original (6 crackers)",b:"Triscuit",c:20},{n:"Reduced Fat (6 crackers)",b:"Triscuit",c:21},{n:"Rosemary & Olive Oil (6 crackers)",b:"Triscuit",c:20},{n:"Cracked Pepper (6 crackers)",b:"Triscuit",c:20},
+        // Wheat Thins
+        {n:"Original (16 crackers)",b:"Wheat Thins",c:22},{n:"Ranch (16 crackers)",b:"Wheat Thins",c:21},{n:"Sundried Tomato & Basil (16)",b:"Wheat Thins",c:22},
+        // Nature Valley
+        {n:"Oats 'n Honey Bar (2 bars)",b:"Nature Valley",c:29},{n:"Sweet & Salty Peanut Bar",b:"Nature Valley",c:21},{n:"Crunchy Variety Pack (2 bars)",b:"Nature Valley",c:29},{n:"Protein Bar (Peanut Butter)",b:"Nature Valley",c:17},
+        // Kind
+        {n:"Dark Chocolate Nuts & Sea Salt",b:"Kind",c:16},{n:"Peanut Butter Dark Chocolate",b:"Kind",c:17},{n:"Caramel Almond & Sea Salt",b:"Kind",c:18},{n:"Fruit & Nut Delight",b:"Kind",c:22},{n:"Oat & Honey",b:"Kind",c:26},
+        // Clif Bar
+        {n:"Chocolate Chip",b:"Clif Bar",c:44},{n:"Crunchy Peanut Butter",b:"Clif Bar",c:42},{n:"White Chocolate Macadamia",b:"Clif Bar",c:43},{n:"Cool Mint Chocolate",b:"Clif Bar",c:44},
+        // Snickers
+        {n:"Regular Bar",b:"Snickers",c:33},{n:"King Size",b:"Snickers",c:54},{n:"Fun Size (1 bar)",b:"Snickers",c:10},{n:"Almond Bar",b:"Snickers",c:32},
+        // M&M's
+        {n:"Milk Chocolate (1.69 oz)",b:"M&M's",c:34},{n:"Peanut (1.74 oz)",b:"M&M's",c:30},{n:"Peanut Butter (1.63 oz)",b:"M&M's",c:29},{n:"Caramel (1.41 oz)",b:"M&M's",c:28},{n:"Fun Size Milk Choc (1 bag)",b:"M&M's",c:13},
+        // Reese's
+        {n:"Peanut Butter Cups (2 pack)",b:"Reese's",c:25},{n:"King Size PB Cups (4 pack)",b:"Reese's",c:50},{n:"Pieces (1.5 oz box)",b:"Reese's",c:27},{n:"Big Cup",b:"Reese's",c:20},{n:"Sticks (2 pack)",b:"Reese's",c:24},
+        // Skittles
+        {n:"Original (2.17 oz)",b:"Skittles",c:47},{n:"Wild Berry (2.17 oz)",b:"Skittles",c:47},{n:"Sour (1.8 oz)",b:"Skittles",c:43},{n:"Fun Size (1 bag)",b:"Skittles",c:16},
+        // Hershey's
+        {n:"Milk Chocolate Bar (1.55 oz)",b:"Hershey's",c:26},{n:"Cookies 'n' Creme (1.55 oz)",b:"Hershey's",c:28},{n:"Kisses (9 pieces)",b:"Hershey's",c:24},{n:"Nuggets Milk Choc (4pc)",b:"Hershey's",c:22},
+        // Kit Kat
+        {n:"Regular Bar (4 fingers)",b:"Kit Kat",c:27},{n:"King Size (3 oz)",b:"Kit Kat",c:42},{n:"Fun Size (1 bar)",b:"Kit Kat",c:10},
+        // Twix
+        {n:"Regular (2 bars)",b:"Twix",c:37},{n:"Fun Size (1 bar)",b:"Twix",c:13},{n:"King Size",b:"Twix",c:55},
+        // Welch's
+        {n:"Fruit Snacks (1 pouch)",b:"Welch's",c:17},{n:"Fruit 'n Yogurt Snacks (1 pouch)",b:"Welch's",c:17},
+        // Hostess
+        {n:"Twinkie (1 cake)",b:"Hostess",c:27},{n:"CupCake (1 cake)",b:"Hostess",c:30},{n:"Ding Dongs (1 cake)",b:"Hostess",c:22},{n:"HoHos (1 cake)",b:"Hostess",c:17},{n:"Donettes Powdered (6pc)",b:"Hostess",c:44},{n:"Donettes Choc (6pc)",b:"Hostess",c:41},
+        // Little Debbie
+        {n:"Cosmic Brownie",b:"Little Debbie",c:31},{n:"Oatmeal Creme Pie",b:"Little Debbie",c:26},{n:"Honey Bun",b:"Little Debbie",c:38},{n:"Swiss Rolls (2pc)",b:"Little Debbie",c:28},{n:"Nutty Buddy (2 bars)",b:"Little Debbie",c:21},{n:"Zebra Cakes (1 cake)",b:"Little Debbie",c:20},
+        // Smartfood
+        {n:"White Cheddar Popcorn (1.75 oz)",b:"Smartfood",c:20},{n:"Movie Theater Butter (1 oz)",b:"Smartfood",c:15},
+        // SkinnyPop
+        {n:"Original Popcorn (1 oz)",b:"SkinnyPop",c:15},{n:"White Cheddar (1 oz)",b:"SkinnyPop",c:14},{n:"Sea Salt & Pepper (1 oz)",b:"SkinnyPop",c:15},
+        // Chex Mix
+        {n:"Traditional (1 oz)",b:"Chex Mix",c:18},{n:"Cheddar (1 oz)",b:"Chex Mix",c:18},{n:"Bold Party Blend (1 oz)",b:"Chex Mix",c:19},{n:"Muddy Buddies (1 oz)",b:"Chex Mix",c:18},
+        // Planters
+        {n:"Trail Mix (1 oz)",b:"Planters",c:11},{n:"Dry Roasted Peanuts (1 oz)",b:"Planters",c:5},{n:"Cashews (1 oz)",b:"Planters",c:8},{n:"Mixed Nuts (1 oz)",b:"Planters",c:6},{n:"Cheez Balls (1 oz)",b:"Planters",c:14},
+        // Pop-Tarts
+        {n:"Frosted Strawberry (1 pastry)",b:"Pop-Tarts",c:37},{n:"Frosted Brown Sugar Cinnamon (1)",b:"Pop-Tarts",c:34},{n:"Frosted S'mores (1)",b:"Pop-Tarts",c:37},{n:"Frosted Blueberry (1)",b:"Pop-Tarts",c:36},{n:"Frosted Chocolate Fudge (1)",b:"Pop-Tarts",c:36},
+        // Rice Krispies Treats
+        {n:"Original Bar",b:"Rice Krispies Treats",c:17},{n:"Chocolate Chip Bar",b:"Rice Krispies Treats",c:17},{n:"Double Chocolatey Chunk",b:"Rice Krispies Treats",c:18},
+        // Pretzels
+        {n:"Rold Gold Tiny Twists (1 oz)",b:"Rold Gold",c:22},{n:"Rold Gold Sticks (1 oz)",b:"Rold Gold",c:23},{n:"Snyder's Pretzel Pieces Honey Mustard (1 oz)",b:"Snyder's",c:18},{n:"Snyder's Mini Pretzels (1 oz)",b:"Snyder's",c:23},
+        // Takis
+        {n:"Fuego (1 oz)",b:"Takis",c:16},{n:"Nitro (1 oz)",b:"Takis",c:16},{n:"Blue Heat (1 oz)",b:"Takis",c:16},
+        // Sun Chips
+        {n:"Garden Salsa (1 oz)",b:"Sun Chips",c:19},{n:"Harvest Cheddar (1 oz)",b:"Sun Chips",c:19},{n:"Original (1 oz)",b:"Sun Chips",c:19},
+        // Fruit snacks
+        {n:"Gushers (1 pouch)",b:"Gushers",c:21},{n:"Fruit Roll-Ups (1 roll)",b:"Fruit Roll-Ups",c:12},{n:"Fruit by the Foot (1 roll)",b:"Fruit by the Foot",c:17},
+        // Quaker
+        {n:"Quaker Chewy Choc Chip",b:"Quaker",c:18},{n:"Quaker Chewy PB Choc Chip",b:"Quaker",c:18},
+        // Misc snacks
+        {n:"Nutri-Grain Bar (Strawberry)",b:"Nutri-Grain",c:24},{n:"Fig Newtons (2 cookies)",b:"Fig Newtons",c:22},{n:"Animal Crackers (1 oz / ~16pc)",b:"Stauffer's",c:20},{n:"Graham Crackers (2 sheets)",b:"Honey Maid",c:22},{n:"Teddy Grahams (1 oz)",b:"Teddy Grahams",c:22},{n:"Cheez-It Original (27 crackers)",b:"Cheez-It",c:17},{n:"Cheez-It White Cheddar (27)",b:"Cheez-It",c:17},{n:"Cheez-It Hot & Spicy (27)",b:"Cheez-It",c:17},
+        {n:"Pirate's Booty Aged White Cheddar (1 oz)",b:"Pirate's Booty",c:18},{n:"Skinny Pop Popcorn Cakes (2 cakes)",b:"SkinnyPop",c:13},
+        {n:"Haribo Gold-Bears (1.8 oz)",b:"Haribo",c:36},{n:"Sour Patch Kids (2 oz)",b:"Sour Patch Kids",c:36},{n:"Swedish Fish (7 pieces)",b:"Swedish Fish",c:26},{n:"Twizzlers (4 twists)",b:"Twizzlers",c:36},{n:"Starburst (1 pack / 2.07 oz)",b:"Starburst",c:42},
+        {n:"Jolly Ranchers (3 pieces)",b:"Jolly Rancher",c:11},{n:"Lifesavers (4 pieces)",b:"Life Savers",c:16},{n:"Nerds (1 box / 1.65 oz)",b:"Nerds",c:38},{n:"Mike and Ike (1.8 oz)",b:"Mike and Ike",c:38},
+        {n:"Beef Jerky Original (1 oz)",b:"Jack Link's",c:3},{n:"Beef Jerky Teriyaki (1 oz)",b:"Jack Link's",c:7},
+        {n:"String Cheese (1 stick)",b:"Sargento",c:1},{n:"Babybel (1 piece)",b:"Babybel",c:0},
+        {n:"Clementine (1 med)",b:"Whole Fruit",c:9},{n:"Apple (med)",b:"Whole Fruit",c:25},{n:"Banana (med)",b:"Whole Fruit",c:27},{n:"Grapes (1 cup)",b:"Whole Fruit",c:27},{n:"Orange (med)",b:"Whole Fruit",c:15},{n:"Strawberries (1 cup)",b:"Whole Fruit",c:11},
+        {n:"Applesauce Cup (4 oz)",b:"Mott's",c:12},{n:"Fruit Cup Peaches (4 oz)",b:"Del Monte",c:15},
+      ];
+      sn.forEach(function(f) { db.push({name: f.n, brand: f.b, carbs: f.c, category: "snacks"}); });
+
+      // ==================== DRINKS ====================
+      var dr = [
+        // Coca-Cola
+        {n:"Coca-Cola (12 oz can)",b:"Coca-Cola",c:39},{n:"Coca-Cola (20 oz)",b:"Coca-Cola",c:65},{n:"Diet Coke (12 oz)",b:"Coca-Cola",c:0},{n:"Coca-Cola Zero (12 oz)",b:"Coca-Cola",c:0},{n:"Cherry Coke (12 oz)",b:"Coca-Cola",c:42},{n:"Vanilla Coke (12 oz)",b:"Coca-Cola",c:42},
+        // Pepsi
+        {n:"Pepsi (12 oz can)",b:"Pepsi",c:41},{n:"Pepsi (20 oz)",b:"Pepsi",c:69},{n:"Diet Pepsi (12 oz)",b:"Pepsi",c:0},{n:"Pepsi Zero Sugar (12 oz)",b:"Pepsi",c:0},{n:"Cherry Pepsi (12 oz)",b:"Pepsi",c:42},{n:"Wild Cherry Pepsi (20 oz)",b:"Pepsi",c:70},
+        // Dr Pepper
+        {n:"Dr Pepper (12 oz)",b:"Dr Pepper",c:40},{n:"Dr Pepper (20 oz)",b:"Dr Pepper",c:66},{n:"Diet Dr Pepper (12 oz)",b:"Dr Pepper",c:0},{n:"Dr Pepper Cherry (12 oz)",b:"Dr Pepper",c:40},{n:"Dr Pepper Cream Soda (12 oz)",b:"Dr Pepper",c:42},
+        // Mountain Dew
+        {n:"Mountain Dew (12 oz)",b:"Mountain Dew",c:46},{n:"Mountain Dew (20 oz)",b:"Mountain Dew",c:77},{n:"Diet Mtn Dew (12 oz)",b:"Mountain Dew",c:0},{n:"Mtn Dew Baja Blast (12 oz)",b:"Mountain Dew",c:44},{n:"Code Red (12 oz)",b:"Mountain Dew",c:46},{n:"Voltage (12 oz)",b:"Mountain Dew",c:46},
+        // Sprite
+        {n:"Sprite (12 oz)",b:"Sprite",c:38},{n:"Sprite (20 oz)",b:"Sprite",c:64},{n:"Sprite Zero (12 oz)",b:"Sprite",c:0},{n:"Sprite Lymonade (12 oz)",b:"Sprite",c:37},
+        // Fanta
+        {n:"Fanta Orange (12 oz)",b:"Fanta",c:44},{n:"Fanta Grape (12 oz)",b:"Fanta",c:44},{n:"Fanta Strawberry (12 oz)",b:"Fanta",c:44},{n:"Fanta Pineapple (12 oz)",b:"Fanta",c:46},
+        // 7UP
+        {n:"7UP (12 oz)",b:"7UP",c:39},{n:"Diet 7UP (12 oz)",b:"7UP",c:0},
+        // A&W
+        {n:"A&W Root Beer (12 oz)",b:"A&W",c:46},{n:"A&W Diet Root Beer (12 oz)",b:"A&W",c:0},{n:"A&W Cream Soda (12 oz)",b:"A&W",c:46},
+        // Canada Dry
+        {n:"Ginger Ale (12 oz)",b:"Canada Dry",c:36},{n:"Diet Ginger Ale (12 oz)",b:"Canada Dry",c:0},
+        // Gatorade
+        {n:"Cool Blue (20 oz)",b:"Gatorade",c:34},{n:"Fruit Punch (20 oz)",b:"Gatorade",c:34},{n:"Lemon Lime (20 oz)",b:"Gatorade",c:34},{n:"Orange (20 oz)",b:"Gatorade",c:34},{n:"Glacier Freeze (20 oz)",b:"Gatorade",c:34},{n:"G Zero (20 oz)",b:"Gatorade",c:0},
+        // Powerade
+        {n:"Mountain Berry Blast (20 oz)",b:"Powerade",c:34},{n:"Fruit Punch (20 oz)",b:"Powerade",c:34},{n:"Zero Mixed Berry (20 oz)",b:"Powerade",c:0},
+        // Body Armor
+        {n:"Strawberry Banana (16 oz)",b:"Body Armor",c:36},{n:"Fruit Punch (16 oz)",b:"Body Armor",c:36},{n:"Orange Mango (16 oz)",b:"Body Armor",c:36},{n:"Lyte Peach Mango (16 oz)",b:"Body Armor",c:5},
+        // Red Bull
+        {n:"Original (8.4 oz)",b:"Red Bull",c:27},{n:"Original (12 oz)",b:"Red Bull",c:39},{n:"Sugar Free (8.4 oz)",b:"Red Bull",c:0},{n:"Tropical (8.4 oz)",b:"Red Bull",c:27},
+        // Monster
+        {n:"Original (16 oz)",b:"Monster",c:54},{n:"Ultra Zero (16 oz)",b:"Monster",c:0},{n:"Mango Loco (16 oz)",b:"Monster",c:54},{n:"Pipeline Punch (16 oz)",b:"Monster",c:54},{n:"Ultra Rosa (16 oz)",b:"Monster",c:0},{n:"Ultra Sunrise (16 oz)",b:"Monster",c:0},
+        // Celsius
+        {n:"Sparkling Orange (12 oz)",b:"Celsius",c:2},{n:"Sparkling Watermelon (12 oz)",b:"Celsius",c:2},{n:"Sparkling Wild Berry (12 oz)",b:"Celsius",c:2},{n:"Sparkling Kiwi Guava (12 oz)",b:"Celsius",c:2},
+        // Starbucks Drinks
+        {n:"Caramel Frappuccino (Grande)",b:"Starbucks",c:66},{n:"Mocha Frappuccino (Grande)",b:"Starbucks",c:61},{n:"Java Chip Frappuccino (Grande)",b:"Starbucks",c:66},{n:"Vanilla Bean Frappuccino (Grande)",b:"Starbucks",c:67},{n:"Caramel Macchiato (Grande)",b:"Starbucks",c:35},{n:"White Choc Mocha (Grande)",b:"Starbucks",c:53},{n:"Iced Vanilla Latte (Grande)",b:"Starbucks",c:28},{n:"Chai Tea Latte (Grande)",b:"Starbucks",c:42},{n:"Pumpkin Spice Latte (Grande)",b:"Starbucks",c:50},{n:"Pink Drink (Grande)",b:"Starbucks",c:25},{n:"Mango Dragonfruit Lemonade (Grande)",b:"Starbucks",c:35},{n:"Strawberry Açaí Refresher (Grande)",b:"Starbucks",c:24},{n:"Hot Chocolate (Grande)",b:"Starbucks",c:43},{n:"Matcha Latte (Grande)",b:"Starbucks",c:32},
+        // Dunkin' Drinks
+        {n:"Iced Caramel Latte (Med)",b:"Dunkin'",c:40},{n:"Frozen Caramel Coffee (Med)",b:"Dunkin'",c:94},{n:"Iced Mocha Latte (Med)",b:"Dunkin'",c:43},{n:"Caramel Swirl Iced Coffee (Med)",b:"Dunkin'",c:45},{n:"Coolatta Strawberry (Med)",b:"Dunkin'",c:92},{n:"Hot Chocolate (Med)",b:"Dunkin'",c:38},{n:"Vanilla Chai (Med)",b:"Dunkin'",c:51},
+        // Juice
+        {n:"Tropicana OJ (12 oz)",b:"Tropicana",c:33},{n:"Tropicana OJ (8 oz)",b:"Tropicana",c:22},{n:"Minute Maid OJ (12 oz)",b:"Minute Maid",c:33},{n:"Minute Maid Apple Juice (12 oz)",b:"Minute Maid",c:42},{n:"Minute Maid Lemonade (12 oz)",b:"Minute Maid",c:40},{n:"Simply Orange (11.5 oz)",b:"Simply",c:33},{n:"Simply Lemonade (11.5 oz)",b:"Simply",c:38},{n:"Simply Apple (11.5 oz)",b:"Simply",c:39},{n:"V8 Original (8 oz)",b:"V8",c:8},{n:"V8 Splash Berry Blend (8 oz)",b:"V8",c:18},{n:"Naked Green Machine (15.2 oz)",b:"Naked",c:54},{n:"Naked Mighty Mango (15.2 oz)",b:"Naked",c:57},{n:"Naked Strawberry Banana (15.2 oz)",b:"Naked",c:55},
+        // Milk
+        {n:"Whole Milk (8 oz)",b:"Dairy",c:12},{n:"2% Milk (8 oz)",b:"Dairy",c:12},{n:"Skim Milk (8 oz)",b:"Dairy",c:12},{n:"Chocolate Milk (8 oz)",b:"Dairy",c:24},{n:"Fairlife Choc. Milk (11.5 oz)",b:"Fairlife",c:13},
+        // Plant milk
+        {n:"Oat Milk Original (8 oz)",b:"Oatly",c:16},{n:"Oat Milk Barista (8 oz)",b:"Oatly",c:14},{n:"Almond Milk Original (8 oz)",b:"Almond Breeze",c:8},{n:"Almond Milk Unsweetened (8 oz)",b:"Almond Breeze",c:1},{n:"Soy Milk Original (8 oz)",b:"Silk",c:11},{n:"Soy Milk Unsweetened (8 oz)",b:"Silk",c:3},
+        // Enhanced water
+        {n:"Vitaminwater XXX (20 oz)",b:"Vitaminwater",c:32},{n:"Vitaminwater Power-C (20 oz)",b:"Vitaminwater",c:32},{n:"Vitaminwater Zero (20 oz)",b:"Vitaminwater",c:0},{n:"Coconut Water (11 oz)",b:"Vita Coco",c:13},
+        // Tea
+        {n:"Arizona Green Tea (23 oz)",b:"Arizona",c:51},{n:"Arizona Arnold Palmer (23 oz)",b:"Arizona",c:69},{n:"Pure Leaf Sweet Tea (18.5 oz)",b:"Pure Leaf",c:42},{n:"Pure Leaf Unsweetened (18.5 oz)",b:"Pure Leaf",c:0},{n:"Gold Peak Sweet Tea (18.5 oz)",b:"Gold Peak",c:48},{n:"Honest Tea Honey Green (16.9 oz)",b:"Honest",c:18},{n:"Brisk Lemon Iced Tea (12 oz)",b:"Brisk",c:24},
+        // Smoothie King
+        {n:"Hulk Strawberry (20 oz)",b:"Smoothie King",c:68},{n:"Caribbean Way (20 oz)",b:"Smoothie King",c:79},{n:"Peanut Power Plus (20 oz)",b:"Smoothie King",c:58},{n:"Slim-N-Trim Vanilla (20 oz)",b:"Smoothie King",c:42},
+        // Jamba Juice
+        {n:"Caribbean Passion (Med)",b:"Jamba Juice",c:67},{n:"Mango-a-Go-Go (Med)",b:"Jamba Juice",c:76},{n:"Razzmatazz (Med)",b:"Jamba Juice",c:71},{n:"Acai Primo Bowl",b:"Jamba Juice",c:67},
+        // Misc
+        {n:"Capri Sun Fruit Punch (1 pouch)",b:"Capri Sun",c:13},{n:"Kool-Aid Jammers (1 pouch)",b:"Kool-Aid",c:14},{n:"Hawaiian Punch (8 oz)",b:"Hawaiian Punch",c:17},{n:"Sunny D (8 oz)",b:"Sunny D",c:15},{n:"Yoo-hoo Chocolate (6.5 oz)",b:"Yoo-hoo",c:20},{n:"Nesquik Choc Milk (8 oz)",b:"Nesquik",c:29},{n:"Bai Coconut (18 oz)",b:"Bai",c:2},{n:"Bai Malawi Mango (18 oz)",b:"Bai",c:2},{n:"BodyArmor Flash IV (20 oz)",b:"Body Armor",c:0},
+      ];
+      dr.forEach(function(f) { db.push({name: f.n, brand: f.b, carbs: f.c, category: "drinks"}); });
+
+      return db;
+    })();
+
+    // ============================================================
+    // STATE
+    // ============================================================
+    const PAGE_SIZE = 30;
+    let currentFilter = "all";
+    let currentBrand = null;
+    let currentSearch = "";
+    let currentPage = 1;
+    let filteredFoods = [];
+    let carbAccumulator = 0;
+    let searchDebounceTimer = null;
+    let foodsInitialized = false;
+    let liveGlucose = null;
+
+    // ============================================================
+    // DOM refs
+    // ============================================================
+    const tabCalc = document.getElementById("tab-calculator");
+    const tabFoods = document.getElementById("tab-foods");
+    const tabSettings = document.getElementById("tab-settings");
+    const panelCalc = document.getElementById("panel-calculator");
+    const panelFoods = document.getElementById("panel-foods");
+    const panelSettings = document.getElementById("panel-settings");
+    const calcCarbs = document.getElementById("calc-carbs");
+    const calcBG = document.getElementById("calc-bg");
+    const calcICR = document.getElementById("calc-icr");
+    const calcISF = document.getElementById("calc-isf");
+    const calcTarget = document.getElementById("calc-target");
+    const btnCalculate = document.getElementById("btn-calculate");
+    const btnReset = document.getElementById("btn-reset");
+    const calcError = document.getElementById("calc-error");
+    const calcErrorText = document.getElementById("calc-error-text");
+    const resultsSection = document.getElementById("results-section");
+    const resultMeal = document.getElementById("result-meal");
+    const resultCorrection = document.getElementById("result-correction");
+    const resultTotal = document.getElementById("result-total");
+    const negativeAlert = document.getElementById("negative-alert");
+    const btnToggleFormulas = document.getElementById("btn-toggle-formulas");
+    const formulasPanel = document.getElementById("formulas-panel");
+    const formulaChevron = document.getElementById("formula-chevron");
+    const setICR = document.getElementById("set-icr");
+    const setISF = document.getElementById("set-isf");
+    const setTarget = document.getElementById("set-target");
+    const btnSave = document.getElementById("btn-save");
+    const saveConfirm = document.getElementById("save-confirm");
+    const foodSearch = document.getElementById("food-search");
+    const foodGrid = document.getElementById("food-grid");
+    const foodCount = document.getElementById("food-count");
+    const foodNoResults = document.getElementById("food-no-results");
+    const foodsTally = document.getElementById("foods-tally");
+    const tallyValue = document.getElementById("tally-value");
+    const btnClearCarbs = document.getElementById("btn-clear-carbs");
+    const brandPillsContainer = document.getElementById("brand-pills-container");
+    const snackBrandPillsContainer = document.getElementById("snack-brand-pills-container");
+    const drinkBrandPillsContainer = document.getElementById("drink-brand-pills-container");
+    const paginationRow = document.getElementById("pagination-row");
+    const btnPrevPage = document.getElementById("btn-prev-page");
+    const btnNextPage = document.getElementById("btn-next-page");
+    const pageInfo = document.getElementById("page-info");
+
+    // ============================================================
+    // TABS
+    // ============================================================
+    function switchTab(tab) {
+      [tabCalc, tabFoods, tabSettings].forEach(function(t) {
+        t.classList.remove("active", "text-accent-550");
+        t.classList.add("text-foreground-450");
+      });
+      [panelCalc, panelFoods, panelSettings].forEach(function(p) { p.classList.add("hidden"); });
+      if (tab === "calculator") {
+        tabCalc.classList.add("active", "text-accent-550");
+        tabCalc.classList.remove("text-foreground-450");
+        panelCalc.classList.remove("hidden");
+      } else if (tab === "foods") {
+        tabFoods.classList.add("active", "text-accent-550");
+        tabFoods.classList.remove("text-foreground-450");
+        panelFoods.classList.remove("hidden");
+        if (!foodsInitialized) {
+          foodsInitialized = true;
+          applyFilters();
+        }
+      } else if (tab === "settings") {
+        tabSettings.classList.add("active", "text-accent-550");
+        tabSettings.classList.remove("text-foreground-450");
+        panelSettings.classList.remove("hidden");
+      }
+    }
+    tabCalc.addEventListener("click", function() { switchTab("calculator"); });
+    tabFoods.addEventListener("click", function() { switchTab("foods"); });
+    tabSettings.addEventListener("click", function() { switchTab("settings"); });
+
+    // ============================================================
+    // SETTINGS (persistence)
+    // ============================================================
+    async function loadSettings() {
+      try {
+        var doc = await AppSDK.get("settings", "ratios");
+        if (doc && doc.data) {
+          var d = doc.data;
+          if (d.icr) { setICR.value = d.icr; calcICR.value = d.icr; }
+          if (d.isf) { setISF.value = d.isf; calcISF.value = d.isf; }
+          if (d.target) { setTarget.value = d.target; calcTarget.value = d.target; }
+        }
+      } catch(e) {}
+    }
+    async function saveSettings() {
+      var data = {
+        icr: setICR.value || "",
+        isf: setISF.value || "",
+        target: setTarget.value || ""
+      };
+      try {
+        await AppSDK.upsert("settings", "ratios", data);
+      } catch(e) {}
+      calcICR.value = data.icr;
+      calcISF.value = data.isf;
+      calcTarget.value = data.target;
+      saveConfirm.classList.remove("hidden");
+      setTimeout(function() { saveConfirm.classList.add("hidden"); }, 2000);
+    }
+    btnSave.addEventListener("click", saveSettings);
+    if (typeof AppSDK !== "undefined") { loadSettings(); }
+
+    // ============================================================
+    // CALCULATOR
+    // ============================================================
+    function showError(msg) {
+      calcErrorText.textContent = msg;
+      calcError.classList.remove("hidden");
+      calcError.style.display = "flex";
+    }
+    function hideError() {
+      calcError.classList.add("hidden");
+    }
+    btnCalculate.addEventListener("click", function() {
+      hideError();
+      var carbs = parseFloat(calcCarbs.value);
+      var bg = parseFloat(calcBG.value);
+      var icr = parseFloat(calcICR.value);
+      var isf = parseFloat(calcISF.value);
+      var target = parseFloat(calcTarget.value);
+      if (isNaN(carbs) || carbs < 0) { showError("Please enter a valid carbohydrate amount."); return; }
+      if (isNaN(bg) || bg < 0) { showError("Please enter a valid blood glucose reading."); return; }
+      if (isNaN(icr) || icr <= 0) { showError("ICR must be a positive number. Set it in the Settings tab."); return; }
+      if (isNaN(isf) || isf <= 0) { showError("ISF must be a positive number. Set it in the Settings tab."); return; }
+      if (isNaN(target) || target < 0) { showError("Please enter a valid target glucose."); return; }
+      var mealBolus = carbs / icr;
+      var correction = (bg - target) / isf;
+      var total = mealBolus + correction;
+      resultMeal.textContent = mealBolus.toFixed(2);
+      resultCorrection.textContent = correction.toFixed(2);
+      resultTotal.textContent = Math.max(0, total).toFixed(2);
+      if (total < 0) {
+        negativeAlert.classList.remove("hidden");
+        negativeAlert.style.display = "flex";
+      } else {
+        negativeAlert.classList.add("hidden");
+      }
+      resultsSection.classList.remove("hidden");
+    });
+    btnReset.addEventListener("click", function() {
+      calcCarbs.value = "";
+      calcBG.value = "";
+      hideError();
+      resultsSection.classList.add("hidden");
+      negativeAlert.classList.add("hidden");
+    });
+
+    // ============================================================
+    // FORMULA TOGGLE
+    // ============================================================
+    btnToggleFormulas.addEventListener("click", function() {
+      var isHidden = formulasPanel.classList.contains("hidden");
+      if (isHidden) {
+        formulasPanel.classList.remove("hidden");
+        formulaChevron.style.transform = "rotate(90deg)";
+      } else {
+        formulasPanel.classList.add("hidden");
+        formulaChevron.style.transform = "rotate(0deg)";
+      }
+    });
+
+    // ============================================================
+    // TOAST NOTIFICATIONS
+    // ============================================================
+    function showToast(msg) {
+      var tc = document.getElementById("toast-container");
+      var toast = document.createElement("div");
+      toast.className = "toast-enter pointer-events-auto bg-foreground-800 text-background-100 text-sm font-medium px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2";
+      toast.innerHTML = '<span class="text-base">✅</span> ' + msg;
+      tc.appendChild(toast);
+      setTimeout(function() {
+        toast.classList.remove("toast-enter");
+        toast.classList.add("toast-exit");
+        setTimeout(function() { toast.remove(); }, 300);
+      }, 2200);
+    }
+
+    // ============================================================
+    // CARB ACCUMULATOR
+    // ============================================================
+    function updateTally() {
+      if (carbAccumulator > 0) {
+        foodsTally.classList.remove("hidden");
+        foodsTally.style.display = "flex";
+        tallyValue.textContent = carbAccumulator;
+      } else {
+        foodsTally.classList.add("hidden");
+      }
+    }
+    function addCarbs(amount) {
+      carbAccumulator += amount;
+      calcCarbs.value = carbAccumulator;
+      updateTally();
+      showToast("Added " + amount + "g carbs");
+    }
+    btnClearCarbs.addEventListener("click", function() {
+      carbAccumulator = 0;
+      calcCarbs.value = "";
+      updateTally();
+    });
+
+    // ============================================================
+    // FOOD FILTERING & PAGINATION
+    // ============================================================
+    function getBrandsForCategory(cat) {
+      var brands = {};
+      for (var i = 0; i < FOODS.length; i++) {
+        if (cat === "all" || FOODS[i].category === cat) {
+          brands[FOODS[i].brand] = true;
+        }
+      }
+      return Object.keys(brands).sort();
+    }
+
+    function applyFilters() {
+      var searchLower = currentSearch.toLowerCase().trim();
+      filteredFoods = [];
+      for (var i = 0; i < FOODS.length; i++) {
+        var f = FOODS[i];
+        if (currentFilter !== "all" && f.category !== currentFilter) continue;
+        if (currentBrand && f.brand !== currentBrand) continue;
+        if (searchLower) {
+          var haystack = (f.name + " " + f.brand).toLowerCase();
+          if (haystack.indexOf(searchLower) === -1) continue;
+        }
+        filteredFoods.push(f);
+      }
+      renderPage();
+    }
+
+    function renderPage() {
+      var totalItems = filteredFoods.length;
+      var totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+      if (currentPage > totalPages) currentPage = totalPages;
+      if (currentPage < 1) currentPage = 1;
+
+      var startIdx = (currentPage - 1) * PAGE_SIZE;
+      var endIdx = Math.min(startIdx + PAGE_SIZE, totalItems);
+      var slice = filteredFoods.slice(startIdx, endIdx);
+
+      if (totalItems === 0) {
+        foodCount.textContent = "";
+        foodGrid.innerHTML = "";
+        foodGrid.classList.add("hidden");
+        foodNoResults.classList.remove("hidden");
+        paginationRow.classList.add("hidden");
+        return;
+      }
+      foodNoResults.classList.add("hidden");
+      foodGrid.classList.remove("hidden");
+      foodCount.textContent = "Showing " + (startIdx + 1) + "–" + endIdx + " of " + totalItems + " results";
+
+      var html = "";
+      for (var i = 0; i < slice.length; i++) {
+        var f = slice[i];
+        var emoji = f.category === "fastfood" ? "🍔" : f.category === "snacks" ? "🍿" : "🥤";
+        html += '<div class="food-card bg-background-150 rounded-2xl p-3.5 flex items-center justify-between gap-3">' +
+          '<div class="flex items-center gap-3 min-w-0">' +
+            '<div class="text-xl flex-shrink-0">' + emoji + '</div>' +
+            '<div class="min-w-0">' +
+              '<p class="food-name text-sm font-semibold text-foreground-800">' + escapeHtml(f.name) + '</p>' +
+              '<p class="food-brand text-xs text-foreground-450">' + escapeHtml(f.brand) + '</p>' +
+            '</div>' +
+          '</div>' +
+          '<div class="flex items-center gap-2 flex-shrink-0">' +
+            '<div class="text-right">' +
+              '<p class="text-base font-bold text-foreground-900 tabular-nums">' + f.carbs + 'g</p>' +
+              '<p class="text-[10px] text-foreground-400">carbs</p>' +
+            '</div>' +
+            '<button class="food-add-btn bg-accent-450 hover:bg-accent-550 text-white text-xs font-semibold px-3 py-2 rounded-lg transition-colors min-h-[36px] whitespace-nowrap" data-carbs="' + f.carbs + '">+ Add</button>' +
+          '</div>' +
+        '</div>';
+      }
+      foodGrid.innerHTML = html;
+
+      var addBtns = foodGrid.querySelectorAll(".food-add-btn");
+      for (var j = 0; j < addBtns.length; j++) {
+        (function(btn) {
+          btn.addEventListener("click", function() {
+            addCarbs(parseInt(btn.getAttribute("data-carbs"), 10));
+          });
+        })(addBtns[j]);
+      }
+
+      if (totalPages <= 1) {
+        paginationRow.classList.add("hidden");
+      } else {
+        paginationRow.classList.remove("hidden");
+        btnPrevPage.disabled = (currentPage <= 1);
+        btnNextPage.disabled = (currentPage >= totalPages);
+        pageInfo.textContent = "Page " + currentPage + " of " + totalPages + " (" + totalItems + " results)";
+      }
+
+      foodGrid.scrollTop = 0;
+    }
+
+    function escapeHtml(str) {
+      var div = document.createElement("div");
+      div.appendChild(document.createTextNode(str));
+      return div.innerHTML;
+    }
+
+    function resetPageAndFilter() {
+      currentPage = 1;
+      applyFilters();
+    }
+
+    // ============================================================
+    // BRAND PILLS
+    // ============================================================
+    function renderBrandPills() {
+      brandPillsContainer.classList.add("hidden");
+      snackBrandPillsContainer.classList.add("hidden");
+      drinkBrandPillsContainer.classList.add("hidden");
+
+      if (currentFilter === "all") return;
+
+      var container;
+      if (currentFilter === "fastfood") container = brandPillsContainer;
+      else if (currentFilter === "snacks") container = snackBrandPillsContainer;
+      else if (currentFilter === "drinks") container = drinkBrandPillsContainer;
+      else return;
+
+      var brands = getBrandsForCategory(currentFilter);
+      var html = '<button class="brand-pill px-3 py-1.5 rounded-full text-xs font-medium min-h-[32px] bg-background-250 text-foreground-700' + (!currentBrand ? ' active-brand' : '') + '" data-brand="">All Brands</button>';
+      for (var i = 0; i < brands.length; i++) {
+        var isActive = (currentBrand === brands[i]);
+        html += '<button class="brand-pill px-3 py-1.5 rounded-full text-xs font-medium min-h-[32px] bg-background-250 text-foreground-700' + (isActive ? ' active-brand' : '') + '" data-brand="' + escapeHtml(brands[i]) + '">' + escapeHtml(brands[i]) + '</button>';
+      }
+      container.innerHTML = html;
+      container.classList.remove("hidden");
+
+      var pills = container.querySelectorAll(".brand-pill");
+      for (var j = 0; j < pills.length; j++) {
+        (function(pill) {
+          pill.addEventListener("click", function() {
+            var brand = pill.getAttribute("data-brand");
+            currentBrand = brand || null;
+            renderBrandPills();
+            resetPageAndFilter();
+          });
+        })(pills[j]);
+      }
+    }
+
+    // ============================================================
+    // CATEGORY FILTER PILLS
+    // ============================================================
+    var filterPills = document.querySelectorAll(".filter-pill");
+    filterPills.forEach(function(pill) {
+      pill.addEventListener("click", function() {
+        filterPills.forEach(function(p) {
+          p.classList.remove("active-pill");
+          p.classList.add("bg-background-200", "text-foreground-600");
+        });
+        pill.classList.add("active-pill");
+        pill.classList.remove("bg-background-200", "text-foreground-600");
+        currentFilter = pill.getAttribute("data-filter");
+        currentBrand = null;
+        renderBrandPills();
+        resetPageAndFilter();
+      });
+    });
+
+    // ============================================================
+    // SEARCH INPUT — DEBOUNCED 300ms
+    // ============================================================
+    foodSearch.addEventListener("input", function() {
+      if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+      searchDebounceTimer = setTimeout(function() {
+        currentSearch = foodSearch.value;
+        resetPageAndFilter();
+      }, 300);
+    });
+
+    // ============================================================
+    // PAGINATION BUTTONS
+    // ============================================================
+    btnPrevPage.addEventListener("click", function() {
+      if (currentPage > 1) {
+        currentPage--;
+        renderPage();
+      }
+    });
+    btnNextPage.addEventListener("click", function() {
+      var totalPages = Math.max(1, Math.ceil(filteredFoods.length / PAGE_SIZE));
+      if (currentPage < totalPages) {
+        currentPage++;
+        renderPage();
+      }
+    });
+
+    // ============================================================
+    // DEXCOM INTEGRATION — event listeners (CSP-compliant)
+    // ============================================================
+    document.getElementById('btn-dex-connect').addEventListener('click', function() { connectDexcom(); });
+    document.getElementById('btn-dex-refresh').addEventListener('click', function() { fetchGlucose(); });
+    document.getElementById('btn-dex-autofill').addEventListener('click', function() { autofillBG(); });
+    document.getElementById('btn-dex-disconnect').addEventListener('click', function() { disconnectDexcom(); });
+
+    // ─── Dexcom Integration ────────────────────────────────────────────────────────
+    function connectDexcom() { window.location.href = '/auth/dexcom'; }
+    async function disconnectDexcom() {
+      try { await fetch('/auth/disconnect', { method: 'POST' }); } catch(e) {}
+      liveGlucose = null;
+      updateDexcomUI(false);
+    }
+    async function fetchGlucose() {
+      try {
+        const res = await fetch('/api/glucose');
+        const data = await res.json();
+        if (data.connected && data.value) {
+          liveGlucose = data;
+          updateDexcomUI(true, data);
+        } else {
+          updateDexcomUI(false);
+        }
+      } catch(e) { updateDexcomUI(false); }
+    }
+    function autofillBG() {
+      if (!liveGlucose || !liveGlucose.value) return;
+      const bgField = document.getElementById('calc-bg');
+      if (!bgField) return;
+      bgField.value = liveGlucose.value;
+      bgField.classList.add('bg-autofilled');
+      const hint = document.getElementById('bg-hint');
+      if (hint) hint.textContent = '✓ Auto-filled from Dexcom';
+      showToast('BG auto-filled: ' + liveGlucose.value + ' mg/dL', 'success');
+    }
+    function trendArrow(trend) {
+      const map = { DoubleUp:'⬆⬆', SingleUp:'⬆', FortyFiveUp:'↗', Flat:'→', FortyFiveDown:'↘', SingleDown:'⬇', DoubleDown:'⬇⬇', NotComputable:'?', RateOutOfRange:'⚡' };
+      return map[trend] || '';
+    }
+    function updateDexcomUI(connected, data) {
+      const dot = document.getElementById('status-dot');
+      const statusText = document.getElementById('status-text');
+      const glucoseReading = document.getElementById('glucose-reading');
+      const btnConnect = document.getElementById('btn-dex-connect');
+      const btnRefresh = document.getElementById('btn-dex-refresh');
+      const btnAutofill = document.getElementById('btn-dex-autofill');
+      const btnDisconnect = document.getElementById('btn-dex-disconnect');
+      const sandboxBadge = document.getElementById('sandbox-badge');
+      if (!dot) return;
+      if (connected && data) {
+        dot.className = 'dex-dot connected';
+        statusText.textContent = 'Dexcom Connected';
+        glucoseReading.style.display = 'flex';
+        document.getElementById('glucose-display').textContent = data.value;
+        document.getElementById('glucose-trend').textContent = trendArrow(data.trend);
+        const t = new Date(data.displayTime || data.systemTime);
+        document.getElementById('glucose-time').textContent = isNaN(t) ? '' : 'Last: ' + t.toLocaleTimeString();
+        btnConnect.style.display = 'none';
+        btnRefresh.style.display = 'inline-block';
+        btnAutofill.style.display = 'inline-block';
+        btnDisconnect.style.display = 'inline-block';
+        if (sandboxBadge) sandboxBadge.style.display = data.sandbox ? 'inline-block' : 'none';
+      } else {
+        dot.className = 'dex-dot';
+        statusText.textContent = 'Dexcom: Not Connected';
+        glucoseReading.style.display = 'none';
+        btnConnect.style.display = 'inline-block';
+        btnRefresh.style.display = 'none';
+        btnAutofill.style.display = 'none';
+        btnDisconnect.style.display = 'none';
+        if (sandboxBadge) sandboxBadge.style.display = 'none';
+      }
+    }
+    async function checkStatus() {
+      try {
+        const res = await fetch('/api/status');
+        const data = await res.json();
+        if (data.connected) fetchGlucose();
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('dexcom_connected')) {
+          showToast('✅ Dexcom connected!', 'success');
+          history.replaceState({}, '', '/');
+          fetchGlucose();
+        }
+        if (params.get('dexcom_error')) {
+          showToast('❌ Dexcom error: ' + params.get('dexcom_error'), 'error');
+          history.replaceState({}, '', '/');
+        }
+      } catch(e) {}
+    }
+    checkStatus();
+    setInterval(function() {
+      fetch('/api/status').then(function(r) { return r.json(); }).then(function(d) { if (d.connected) fetchGlucose(); }).catch(function() {});
+    }, 5 * 60 * 1000);
+
+    // ============================================================
+    // Re-init Lucide after dynamic content
+    // ============================================================
+    </script>
+  </body>
+</html>
