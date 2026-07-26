@@ -1,20 +1,17 @@
 {
   "name": "insulin-dose-helper",
   "version": "1.0.0",
-  "description": "Educational insulin dose helper with Dexcom CGM integration",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js"
   },
-  "engines": {
-    "node": ">=18.0.0"
-  },
+  "engines": { "node": ">=18.0.0" },
   "dependencies": {
     "axios": "^1.7.2",
+    "cookie-parser": "^1.4.6",
     "dotenv": "^16.4.5",
-    "express": "^4.19.2",
-    "express-session": "^1.18.0"
+    "express": "^4.19.2"
   },
   "devDependencies": {
     "nodemon": "^3.1.4"
